@@ -1,6 +1,9 @@
 import "./css/layout.css";
 import "./css/components.css";
+import "./css/auth.css";
 
+import { getSupabase, isSupabaseConfigured } from "./js/auth/supabaseClient.js";
+import { mountAuthRoot } from "./js/auth/authViews.js";
 import { mountWizard } from "./js/onboarding/wizard.js";
 import { fetchOnboardingStatus, postGenerateDiet, postFeedback } from "./js/api/client.js";
 import { parseCommaList } from "./js/onboarding/mapPayload.js";
@@ -168,7 +171,7 @@ async function runGenerate(simulate) {
   }
 }
 
-function init() {
+function mountMainApp() {
   const app = $("app");
   app.innerHTML = `
     <div class="app-shell">
@@ -178,6 +181,7 @@ function init() {
           <button type="button" class="tab-btn" id="tab-onboarding" role="tab" aria-selected="true">Onboarding</button>
           <button type="button" class="tab-btn" id="tab-dashboard" role="tab" aria-selected="false" hidden>Dashboard</button>
         </nav>
+        <button type="button" class="btn btn--ghost" id="btn-sign-out">Sign out</button>
       </header>
       <div id="view-onboarding" class="app-main-wrap app-view">
         <div id="onboarding-root" class="app-region"></div>
@@ -238,6 +242,16 @@ function init() {
     emptyState("Insights appear when the API returns adherence or recommendations.")
   );
 
+  const supabase = getSupabase();
+  if (supabase) {
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") location.reload();
+    });
+    $("btn-sign-out").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+    });
+  }
+
   const root = $("onboarding-root");
   mountWizard(root, {
     onComplete: () => {
@@ -283,4 +297,31 @@ function init() {
   loadProfile();
 }
 
-init();
+async function bootstrap() {
+  const app = $("app");
+  if (!isSupabaseConfigured()) {
+    app.innerHTML = "";
+    app.appendChild(
+      inlineError(
+        "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local (see .env.example)."
+      )
+    );
+    return;
+  }
+  const supabase = getSupabase();
+  if (!supabase) {
+    app.innerHTML = "";
+    app.appendChild(inlineError("Could not initialize Supabase client."));
+    return;
+  }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
+    mountAuthRoot(app, { onAuthenticated: () => mountMainApp() });
+    return;
+  }
+  mountMainApp();
+}
+
+bootstrap();
