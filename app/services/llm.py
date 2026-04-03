@@ -51,12 +51,54 @@ def _get_fallback_plan(calories):
     }
 
 
+def _fmt_ctx(val):
+    """Stringify profile values for prompts; None and empty collections are safe."""
+    if val is None:
+        return "(not set)"
+    if isinstance(val, (list, tuple, set)):
+        return ", ".join(str(x) for x in val) if val else "(none)"
+    if isinstance(val, dict):
+        return json.dumps(val, default=str)
+    return str(val)
+
+
+def _build_diet_context_block(user_dict: dict) -> str:
+    """Structured memory/profile for personalized diet generation."""
+    u = user_dict
+    return f"""User Profile:
+Age: {_fmt_ctx(u.get("age"))}
+Weight: {_fmt_ctx(u.get("weight"))}
+Height: {_fmt_ctx(u.get("height"))}
+Goal: {_fmt_ctx(u.get("goal"))}
+Activity Level: {_fmt_ctx(u.get("activity_level"))}
+
+Diet Preferences:
+Diet Type: {_fmt_ctx(u.get("diet_type"))}
+Preferred Foods: {_fmt_ctx(u.get("preferred_foods"))}
+Disliked Foods: {_fmt_ctx(u.get("disliked_foods"))}
+Allergies: {_fmt_ctx(u.get("allergies"))}
+
+Fitness:
+Type: {_fmt_ctx(u.get("fitness_type"))}
+Gym Level: {_fmt_ctx(u.get("gym_level"))}
+Sport: {_fmt_ctx(u.get("sport_type"))}
+Training Intensity: {_fmt_ctx(u.get("training_intensity"))}
+
+Behavior:
+Skipped Meals: {_fmt_ctx(u.get("skipped_meals"))}
+
+Feedback:
+Liked Foods: {_fmt_ctx(u.get("high_rated_foods"))}
+Avoid Foods: {_fmt_ctx(u.get("low_rated_foods"))}
+"""
+
+
 def generate_diet_plan(user_data, calories, macros):
     global LAST_DIET_PLAN_PROVIDER
     from app.core.config import GEMINI_API_KEY
 
     memory_section = ""
-    user_details = user_data
+    context_block = ""
     if isinstance(user_data, dict):
         _skip_profile_keys = frozenset({"food_usage_counts", "feedback_history"})
         slim = {k: v for k, v in user_data.items() if k not in _skip_profile_keys}
@@ -66,23 +108,25 @@ def generate_diet_plan(user_data, calories, macros):
 Learned preferences and history (respect these when compatible with calorie and protein targets):
 {mem}
 """
-        try:
-            user_details = json.dumps(slim, indent=2, default=str)
-        except TypeError:
-            user_details = str(slim)
+        context_block = _build_diet_context_block(slim)
     else:
-        user_details = str(user_data)
+        context_block = f"User Profile (raw):\n{_fmt_ctx(user_data)}"
 
     prompt = f"""
-You are a professional dietitian.
+You are a professional diet planner.
 
-Create a 1-day diet plan.
-
-User profile and current intake:
-{user_details}
+{context_block}
 {memory_section}
-Prefer foods listed as preferred when they fit the targets. Do not include foods the user avoids.
-Align choices with the stated diet type and goal.
+
+Generate a realistic daily meal plan.
+
+Rules:
+- match user's goal
+- respect diet type
+- avoid disliked/allergy foods
+- include preferred foods when possible
+- adjust for fitness level
+- distribute protein properly
 
 Target Calories: {calories}
 Target Macros: {macros}
@@ -155,3 +199,103 @@ Return STRICT JSON ONLY:
         LAST_DIET_PLAN_PROVIDER = "fallback"
         print("[diet_llm] provider=fallback (api_error) | OpenAI=not_used")
         return _get_fallback_plan(calories)
+
+
+def call_llm(prompt: str):
+    """
+    General-purpose Gemini call for structured or long-form outputs.
+    Returns raw model text (strip) or None on failure / no key.
+    Caller is responsible for parsing (e.g. JSON via _parse_json_response).
+    """
+    from app.core.config import GEMINI_API_KEY
+
+    if not GEMINI_API_KEY:
+        return None
+
+    now = time.time()
+    request_timestamps[:] = [t for t in request_timestamps if now - t < 60]
+    if len(request_timestamps) >= MAX_REQUESTS_PER_MINUTE:
+        print("[call_llm] skipped (rate_limit)")
+        return None
+    request_timestamps.append(now)
+
+    safety_settings = [
+        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+    ]
+    config = types.GenerateContentConfig(
+        temperature=0.35,
+        top_p=0.9,
+        max_output_tokens=4096,
+        safety_settings=safety_settings,
+    )
+    full_prompt = (
+        "Follow the user's instructions exactly. When JSON is requested, respond with STRICT JSON only, "
+        "no markdown fences or commentary.\n\n"
+        + prompt
+    )
+
+    try:
+        client = _get_gemini_client(GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=full_prompt,
+            config=config,
+        )
+        if not response.text:
+            return None
+        return response.text.strip()
+    except Exception as e:
+        print("[call_llm] error:", e)
+        return None
+
+
+def call_llm_recommendation(prompt: str):
+    """
+    Plain-text Gemini call for short diet tips. Returns stripped text or None on failure / no key.
+    Shares the same rate-limit bucket as diet generation to avoid runaway usage.
+    """
+    from app.core.config import GEMINI_API_KEY
+
+    if not GEMINI_API_KEY:
+        return None
+
+    now = time.time()
+    request_timestamps[:] = [t for t in request_timestamps if now - t < 60]
+    if len(request_timestamps) >= MAX_REQUESTS_PER_MINUTE:
+        print("[recommendation_llm] skipped (rate_limit)")
+        return None
+    request_timestamps.append(now)
+
+    safety_settings = [
+        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+    ]
+    config = types.GenerateContentConfig(
+        temperature=0.4,
+        top_p=0.9,
+        max_output_tokens=384,
+        safety_settings=safety_settings,
+    )
+    full_prompt = (
+        "You are a supportive nutrition coach. Reply with plain text only, no JSON. "
+        + prompt
+    )
+
+    try:
+        client = _get_gemini_client(GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=full_prompt,
+            config=config,
+        )
+        if not response.text:
+            return None
+        return response.text.strip()
+    except Exception as e:
+        print("[recommendation_llm] error:", e)
+        return None

@@ -1,4 +1,12 @@
+from app.core.config import EVA_DEBUG_AUTH
+from app.services.supabase_store import fetch_nested_state, is_persistence_enabled, upsert_nested_state
+
 user_memory = {}
+
+
+def _debug(msg: str) -> None:
+    if EVA_DEBUG_AUTH:
+        print(f"[eva debug] {msg}", flush=True)
 
 PREFERRED_TOP_N = 15
 
@@ -147,6 +155,23 @@ def _migrate_legacy_to_nested(row: dict) -> dict:
     return out
 
 
+def _nested_from_persisted(raw: dict) -> dict:
+    """Deserialize JSONB state from Supabase into nested section dict."""
+    if not raw:
+        return _empty_nested_user()
+    if _is_nested_row(raw):
+        return raw
+    return _migrate_legacy_to_nested(raw)
+
+
+def _persist_user_state(user_id: str) -> None:
+    if not is_persistence_enabled():
+        return
+    if user_id not in user_memory:
+        return
+    upsert_nested_state(user_id, user_memory[user_id])
+
+
 def flatten_user_record(nested: dict) -> dict:
     """Merge sections into one flat dict for agents and normalize_user_memory."""
     flat: dict = {}
@@ -159,7 +184,23 @@ def flatten_user_record(nested: dict) -> dict:
 
 def _ensure_nested(user_id: str) -> None:
     if user_id not in user_memory:
-        user_memory[user_id] = _empty_nested_user()
+        loaded = None
+        if is_persistence_enabled():
+            raw = fetch_nested_state(user_id)
+            if raw is not None:
+                loaded = _nested_from_persisted(raw)
+        if loaded is not None:
+            user_memory[user_id] = loaded
+            _debug(
+                f"memory: loaded user_id={user_id} from persistence "
+                f"(sections={list(loaded.keys())})"
+            )
+        else:
+            user_memory[user_id] = _empty_nested_user()
+            _debug(
+                f"memory: new in-process user_id={user_id} "
+                f"(no row yet or persistence disabled={not is_persistence_enabled()})"
+            )
         return
     row = user_memory[user_id]
     if _is_nested_row(row):
@@ -310,6 +351,7 @@ def record_foods_from_plan(user_id: str, plan: dict):
         if len(preferred) >= PREFERRED_TOP_N:
             break
     diet["preferred_foods"] = preferred
+    _persist_user_state(user_id)
 
 
 def store_user_data(user_id: str, data: dict, merge_lists: bool = False):
@@ -323,6 +365,11 @@ def store_user_data(user_id: str, data: dict, merge_lists: bool = False):
             if not sec:
                 continue
             nested[sec][k] = v
+        _persist_user_state(user_id)
+        _debug(
+            f"memory: store user_id={user_id} merge_lists={merge_lists} "
+            f"incoming_keys={list(data.keys())}"
+        )
         return
     patch = dict(data)
     for key in MERGE_LIST_KEYS:
@@ -337,6 +384,11 @@ def store_user_data(user_id: str, data: dict, merge_lists: bool = False):
         if not sec:
             continue
         nested[sec][k] = v
+    _persist_user_state(user_id)
+    _debug(
+        f"memory: store user_id={user_id} merge_lists={merge_lists} "
+        f"incoming_keys={list(data.keys())}"
+    )
 
 
 def foods_from_plan(plan: dict):
@@ -367,6 +419,7 @@ def store_feedback(user_id: str, rating: int, feedback_text: str, plan: dict):
         fb["low_rated_foods"] = dedupe_merge_lists(fb.get("low_rated_foods"), foods)
     if rating >= 4 and foods:
         fb["high_rated_foods"] = dedupe_merge_lists(fb.get("high_rated_foods"), foods)
+    _persist_user_state(user_id)
 
 
 def record_skipped_meal(user_id: str, meal_name: str):
@@ -375,6 +428,7 @@ def record_skipped_meal(user_id: str, meal_name: str):
     _ensure_nested(user_id)
     beh = user_memory[user_id]["behavior"]
     beh["skipped_meals"] = dedupe_merge_lists(beh.get("skipped_meals"), [meal_name.strip()])
+    _persist_user_state(user_id)
 
 
 def persist_after_generation(user_id: str, user_payload: dict, plan: dict, last_calories=None):
@@ -402,7 +456,12 @@ def persist_after_generation(user_id: str, user_payload: dict, plan: dict, last_
 def get_user_data(user_id: str) -> dict:
     """Return flattened stored data for user_id (agent-compatible shape)."""
     _ensure_nested(user_id)
-    return dict(flatten_user_record(user_memory[user_id]))
+    flat = dict(flatten_user_record(user_memory[user_id]))
+    _debug(
+        f"memory: get user_id={user_id} flat_key_count={len(flat)} "
+        f"onboarding_complete={flat.get('onboarding_complete')}"
+    )
+    return flat
 
 
 def _medical_step_filled(row: dict) -> bool:

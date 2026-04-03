@@ -133,6 +133,18 @@ export function renderPlanOutput(container, data) {
 }
 
 /**
+ * @param {object | null | undefined} quality plan.quality from API
+ * @returns {number | null} integer 0–100
+ */
+function score0to100FromQuality(quality) {
+  if (!quality || typeof quality !== "object") return null;
+  const raw =
+    quality.final_score != null ? quality.final_score : quality.score != null ? quality.score : null;
+  if (raw == null || !Number.isFinite(Number(raw))) return null;
+  return Math.round(Math.max(0, Math.min(100, Number(raw))));
+}
+
+/**
  * @param {HTMLElement} container
  */
 export function renderInsightsOutput(container, data) {
@@ -144,73 +156,206 @@ export function renderInsightsOutput(container, data) {
     container.appendChild(p);
     return;
   }
+
   const plan = data.plan;
   const quality = plan && plan.quality ? plan.quality : null;
-  const scoreNum =
-    quality && (quality.final_score != null ? quality.final_score : quality.score);
-  const details = quality && quality.details ? quality.details : null;
-
-  if (quality) {
-    const box = document.createElement("div");
-    box.className = "card";
-    box.style.marginBottom = "var(--space-3)";
-    const h = document.createElement("h3");
-    h.className = "heading-section";
-    h.textContent = "Score";
-    const p = document.createElement("p");
-    p.style.fontSize = "var(--text-xl)";
-    p.style.fontWeight = "700";
-    p.style.margin = "0";
-    p.textContent = scoreNum != null ? String(scoreNum) : "—";
-    box.appendChild(h);
-    box.appendChild(p);
-    if (details) {
-      Object.entries(details).forEach(([k, v]) => {
-        const d = document.createElement("div");
-        d.className = "field__hint";
-        d.innerHTML = `<strong>${escapeHtml(k)}</strong>: ${escapeHtml(String(v))}`;
-        box.appendChild(d);
-      });
-    }
-    container.appendChild(box);
-  }
-
+  const score = score0to100FromQuality(quality);
   const ad = data.adherence;
-  if (ad) {
-    const box = document.createElement("div");
-    box.className = "card";
-    box.style.marginBottom = "var(--space-3)";
-    box.innerHTML = `<h3 class="heading-section">Adherence</h3>
-      <p style="font-size:var(--text-xl);font-weight:700;margin:0;">${ad.adherence != null ? ad.adherence + "%" : "—"}</p>
-      <p class="field__hint">Completed ${ad.completed != null ? ad.completed : "—"} / ${ad.total != null ? ad.total : "—"} meals</p>`;
-    container.appendChild(box);
+  const recObj = data.recommendations;
+  const recList = recObj && Array.isArray(recObj.recommendations) ? recObj.recommendations : [];
+
+  const root = document.createElement("div");
+  root.className = "insights-panel";
+
+  function addBlock(titleText) {
+    const block = document.createElement("section");
+    block.className = "insights-panel__block";
+    const t = document.createElement("h3");
+    t.className = "insights-panel__label";
+    t.textContent = titleText;
+    block.appendChild(t);
+    return block;
   }
 
-  const recObj = data.recommendations;
-  const recList = recObj && recObj.recommendations ? recObj.recommendations : null;
-  if (recList && recList.length) {
-    const box = document.createElement("div");
-    box.className = "card";
-    const h = document.createElement("h3");
-    h.className = "heading-section";
-    h.textContent = "Recommendations";
+  // 1 — Plan score (0–100)
+  const secScore = addBlock("Plan score");
+  const scoreWrap = document.createElement("div");
+  scoreWrap.className = "insights-score";
+  if (score != null) {
+    const v = document.createElement("span");
+    v.className = "insights-score__value";
+    v.textContent = String(score);
+    const sfx = document.createElement("span");
+    sfx.className = "insights-score__suffix";
+    sfx.textContent = "/100";
+    scoreWrap.append(v, sfx);
+  } else {
+    const dash = document.createElement("span");
+    dash.className = "insights-score__empty";
+    dash.textContent = "—";
+    scoreWrap.appendChild(dash);
+  }
+  secScore.appendChild(scoreWrap);
+  const scoreHint = document.createElement("p");
+  scoreHint.className = "field__hint insights-panel__hint";
+  scoreHint.textContent =
+    score != null
+      ? "Diversity, balance, and simplicity of the meal plan."
+      : "Appears once a valid plan is generated.";
+  secScore.appendChild(scoreHint);
+  root.appendChild(secScore);
+
+  // 2 — Adherence %
+  const secPct = addBlock("Adherence");
+  const pctRow = document.createElement("p");
+  pctRow.className = "insights-metric";
+  if (ad && ad.adherence != null && Number.isFinite(Number(ad.adherence))) {
+    pctRow.textContent = `${Math.round(Number(ad.adherence))}%`;
+  } else {
+    pctRow.classList.add("insights-metric--muted");
+    pctRow.textContent = "—";
+  }
+  secPct.appendChild(pctRow);
+  const pctHint = document.createElement("p");
+  pctHint.className = "field__hint insights-panel__hint";
+  pctHint.textContent =
+    ad && ad.adherence != null
+      ? "Share of planned meals you marked as completed (simulate)."
+      : "Run Simulate adherence with completed meal names.";
+  secPct.appendChild(pctHint);
+  root.appendChild(secPct);
+
+  // 3 — Completed meals
+  const secMeals = addBlock("Completed meals");
+  const mealsRow = document.createElement("p");
+  mealsRow.className = "insights-metric";
+  if (ad && ad.completed != null && ad.total != null) {
+    mealsRow.textContent = `${ad.completed} of ${ad.total} meals`;
+  } else {
+    mealsRow.classList.add("insights-metric--muted");
+    mealsRow.textContent = "—";
+  }
+  secMeals.appendChild(mealsRow);
+  const mealsHint = document.createElement("p");
+  mealsHint.className = "field__hint insights-panel__hint";
+  mealsHint.textContent =
+    ad && ad.completed != null && ad.total != null
+      ? "From your last adherence simulation."
+      : "Shown after simulating with completed meals.";
+  secMeals.appendChild(mealsHint);
+  root.appendChild(secMeals);
+
+  // 4 — Recommendations
+  const secRec = addBlock("Recommendations");
+  if (recList.length) {
     const ul = document.createElement("ul");
-    ul.style.margin = "0";
-    ul.style.paddingLeft = "1.1rem";
+    ul.className = "insights-list";
     recList.forEach((r) => {
       const li = document.createElement("li");
-      li.textContent = r;
+      li.textContent = typeof r === "string" ? r : String(r);
       ul.appendChild(li);
     });
-    box.appendChild(h);
-    box.appendChild(ul);
-    container.appendChild(box);
+    secRec.appendChild(ul);
+  } else {
+    const empty = document.createElement("p");
+    empty.className = "field__hint insights-panel__hint";
+    empty.textContent = "None yet — simulate adherence to get tailored tips.";
+    secRec.appendChild(empty);
+  }
+  root.appendChild(secRec);
+
+  container.appendChild(root);
+}
+
+/**
+ * @param {HTMLElement} container
+ * @param {object} workout weekly_plan / progression / notes from WorkoutPlannerAgent
+ */
+export function renderWorkoutOutput(container, workout) {
+  container.replaceChildren();
+  if (!workout || workout.error) {
+    const el = document.createElement("div");
+    el.className = "empty-state";
+    el.textContent = "Could not render workout plan.";
+    container.appendChild(el);
+    return;
   }
 
-  if (!quality && !ad && (!recList || !recList.length)) {
+  if (workout.progression) {
     const p = document.createElement("p");
     p.className = "field__hint";
-    p.textContent = "Generate a plan; simulate adherence to see recommendations.";
+    p.style.marginBottom = "var(--space-3)";
+    const s = document.createElement("strong");
+    s.textContent = "Progression: ";
+    p.appendChild(s);
+    p.appendChild(document.createTextNode(String(workout.progression)));
     container.appendChild(p);
+  }
+  if (workout.notes) {
+    const p = document.createElement("p");
+    p.className = "field__hint";
+    p.style.marginBottom = "var(--space-4)";
+    const s = document.createElement("strong");
+    s.textContent = "Notes: ";
+    p.appendChild(s);
+    p.appendChild(document.createTextNode(String(workout.notes)));
+    container.appendChild(p);
+  }
+
+  const plan = workout.weekly_plan;
+  if (plan && Array.isArray(plan) && plan.length) {
+    plan.forEach((day) => {
+      const card = document.createElement("article");
+      card.className = "meal-card";
+      const h = document.createElement("h3");
+      h.className = "meal-card__title";
+      const dayLabel = day.day != null ? String(day.day) : "Day";
+      const focus = day.focus != null ? String(day.focus) : "";
+      h.textContent = focus ? `${dayLabel} — ${focus}` : dayLabel;
+      card.appendChild(h);
+
+      const exercises = day.exercises || [];
+      const table = document.createElement("table");
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.style.fontSize = "var(--text-sm)";
+      table.style.marginTop = "var(--space-2)";
+
+      const thead = document.createElement("thead");
+      const hr = document.createElement("tr");
+      ["Exercise", "Sets", "Reps"].forEach((label) => {
+        const th = document.createElement("th");
+        th.style.textAlign = "left";
+        th.style.padding = "var(--space-1) var(--space-2) var(--space-1) 0";
+        th.textContent = label;
+        hr.appendChild(th);
+      });
+      thead.appendChild(hr);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      exercises.forEach((ex) => {
+        const tr = document.createElement("tr");
+        const nameTd = document.createElement("td");
+        nameTd.style.padding = "var(--space-1) var(--space-2) var(--space-1) 0";
+        nameTd.textContent = ex && ex.name != null ? String(ex.name) : "—";
+        const setsTd = document.createElement("td");
+        setsTd.textContent = ex && ex.sets != null ? String(ex.sets) : "—";
+        const repsTd = document.createElement("td");
+        repsTd.textContent = ex && ex.reps != null ? String(ex.reps) : "—";
+        tr.appendChild(nameTd);
+        tr.appendChild(setsTd);
+        tr.appendChild(repsTd);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      card.appendChild(table);
+      container.appendChild(card);
+    });
+  } else {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No workout days in response.";
+    container.appendChild(empty);
   }
 }

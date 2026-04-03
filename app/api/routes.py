@@ -1,5 +1,10 @@
-from fastapi import APIRouter
+from typing import Any, Optional, Tuple
+
+from fastapi import APIRouter, Request
+
+from app.core.auth import get_current_user
 from app.agents.orchestrator import Orchestrator
+from app.agents.workout_planner import WorkoutPlannerAgent
 from app.services.memory import (
     get_user_data,
     get_onboarding_status,
@@ -15,17 +20,18 @@ from app.services.calculator import (
     calculate_bmr,
     calculate_tdee,
     calculate_target_calories,
-    calculate_macros
+    calculate_macros,
 )
 
 router = APIRouter()
 
 orchestrator = Orchestrator()
+_workout_agent = WorkoutPlannerAgent()
 
 
 @router.post("/onboard")
-def onboard(body: OnboardingInput):
-    user_id = "default_user"
+def onboard(request: Request, body: OnboardingInput):
+    user_id = get_current_user(request)
     patch = body.model_dump(exclude_none=True)
     patch["onboarding_complete"] = True
     store_user_data(user_id, patch, merge_lists=True)
@@ -33,27 +39,29 @@ def onboard(body: OnboardingInput):
 
 
 @router.post("/onboarding/step")
-def onboarding_step(body: OnboardingStepInput):
-    user_id = "default_user"
+def onboarding_step(request: Request, body: OnboardingStepInput):
+    user_id = get_current_user(request)
     patch = body.model_dump(exclude_none=True)
     store_user_data(user_id, patch, merge_lists=True)
     return {"ok": True, "stored_keys": list(patch.keys())}
 
 
 @router.get("/onboarding/status")
-def onboarding_status():
-    return get_onboarding_status("default_user")
+def onboarding_status(request: Request):
+    user_id = get_current_user(request)
+    return get_onboarding_status(user_id)
 
 
 @router.post("/onboarding/complete")
-def onboarding_complete():
-    store_user_data("default_user", {"onboarding_complete": True})
+def onboarding_complete(request: Request):
+    user_id = get_current_user(request)
+    store_user_data(user_id, {"onboarding_complete": True})
     return {"ok": True, "onboarding_complete": True}
 
 
 @router.post("/feedback")
-def submit_feedback(body: FeedbackInput):
-    user_id = "default_user"
+def submit_feedback(request: Request, body: FeedbackInput):
+    user_id = get_current_user(request)
     store_feedback(
         user_id,
         body.rating,
@@ -63,9 +71,7 @@ def submit_feedback(body: FeedbackInput):
     return {"ok": True}
 
 
-@router.post("/generate-diet")
-def generate_diet(user: UserInput):
-    user_id = "default_user"
+def _prepare_diet_inputs(user_id: str, user: UserInput):
     past_data = normalize_user_memory(get_user_data(user_id))
     user_dict = user.model_dump(exclude_none=True)
     if user_dict.get("skipped_meals"):
@@ -83,6 +89,21 @@ def generate_diet(user: UserInput):
     tdee = calculate_tdee(bmr, user.activity_level)
     calories = calculate_target_calories(tdee, user.goal)
     macros = calculate_macros(calories, user.weight)
+    return planner_input, calories, macros, user_dict
+
+
+PreparedDietInputs = Tuple[Any, float, dict, dict]
+
+
+def _run_diet_generation(
+    user_id: str,
+    user: UserInput,
+    prepared: Optional[PreparedDietInputs] = None,
+) -> dict:
+    if prepared is None:
+        planner_input, calories, macros, _user_dict = _prepare_diet_inputs(user_id, user)
+    else:
+        planner_input, calories, macros, _user_dict = prepared
 
     try:
         result = orchestrator.run(
@@ -92,16 +113,14 @@ def generate_diet(user: UserInput):
             actual_meals=user.actual_meals,
         )
     except Exception as e:
-        return {
-            "error": str(e)
-        }
+        return {"error": str(e)}
 
     if "error" in result:
         return {
             "target_calories": round(calories),
             "macros": macros,
             "error": result.get("error"),
-            "details": result.get("details")
+            "details": result.get("details"),
         }
 
     if result.get("validation", {}).get("status") == "valid":
@@ -125,3 +144,23 @@ def generate_diet(user: UserInput):
     if result.get("recommendations"):
         out["recommendations"] = result["recommendations"]
     return out
+
+
+@router.post("/generate-diet")
+def generate_diet(request: Request, user: UserInput):
+    user_id = get_current_user(request)
+    return _run_diet_generation(user_id, user)
+
+
+@router.post("/generate-full-plan")
+def generate_full_plan(request: Request, user: UserInput):
+    user_id = get_current_user(request)
+    prep = _prepare_diet_inputs(user_id, user)
+    diet_out = _run_diet_generation(user_id, user, prepared=prep)
+
+    try:
+        workout_out = _workout_agent.run(prep[0])
+    except Exception:
+        workout_out = _workout_agent._fallback_output()
+
+    return {"diet": diet_out, "workout": workout_out}

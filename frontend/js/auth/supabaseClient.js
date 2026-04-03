@@ -3,8 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-/** Fallback when `VITE_AUTH_REDIRECT_URL` is unset and `window` is unavailable (e.g. tests). */
-const DEFAULT_AUTH_REDIRECT = "http://localhost:5173/";
+/** Fallback when `VITE_AUTH_REDIRECT_URL` is unset and `window` is unavailable (e.g. tests). Matches Vite `server.port`. */
+const DEFAULT_AUTH_REDIRECT = "http://localhost:3000/";
 
 export function isSupabaseConfigured() {
   return Boolean(
@@ -54,7 +54,7 @@ export function getAuthRedirectUrl() {
   }
   if (import.meta.env.PROD) {
     console.warn(
-      "[Eva] VITE_AUTH_REDIRECT_URL is unset and window missing; OAuth redirectTo falls back to localhost:5173. Set VITE_AUTH_REDIRECT_URL for production builds."
+      "[Eva] VITE_AUTH_REDIRECT_URL is unset and window missing; OAuth redirectTo falls back to localhost:3000. Set VITE_AUTH_REDIRECT_URL for production builds."
     );
   }
   return DEFAULT_AUTH_REDIRECT;

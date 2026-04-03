@@ -239,7 +239,7 @@ def main():
 
     s = s.replace(
         "<p class=\"hint\" style=\"margin-bottom:1rem;\">Vite dev proxies <code>/generate-diet</code> and <code>/feedback</code> to <code>http://127.0.0.1:8000</code>. Ensure the API is running.</p>",
-        "<p class=\"hint\" style=\"margin-bottom:1rem;\">Vite dev proxies <code>/generate-diet</code>, <code>/feedback</code>, <code>/onboard</code> to <code>http://127.0.0.1:8000</code>. Ensure the API is running.</p>",
+        "<p class=\"hint\" style=\"margin-bottom:1rem;\">Vite dev proxies <code>/generate-full-plan</code>, <code>/generate-diet</code>, <code>/feedback</code>, <code>/onboard</code> to <code>http://127.0.0.1:8000</code>. Ensure the API is running.</p>",
         1,
     )
 
@@ -373,12 +373,48 @@ def build_js():
       return 3;
     }
 
-    function renderOutput(data) {
-      renderCenter(data);
+    function renderWorkoutHtml(workout) {
+      if (!workout || workout.error) {
+        return `<div class="section"><h2>Workout</h2><div class="empty">Could not load workout plan.</div></div>`;
+      }
+      const plan = workout.weekly_plan;
+      if (!plan || !Array.isArray(plan) || !plan.length) {
+        return `<div class="section"><h2>Workout</h2><div class="empty">No workout days in response.</div></div>`;
+      }
+      let prog = "";
+      if (workout.progression)
+        prog = `<p class="hint"><strong>Progression:</strong> ${escapeHtml(String(workout.progression))}</p>`;
+      let notes = "";
+      if (workout.notes)
+        notes = `<p class="hint"><strong>Notes:</strong> ${escapeHtml(String(workout.notes))}</p>`;
+      const days = plan
+        .map((day) => {
+          const dayLabel = day.day != null ? String(day.day) : "Day";
+          const focus = day.focus != null ? String(day.focus) : "";
+          const title = focus
+            ? `${escapeHtml(dayLabel)} — ${escapeHtml(focus)}`
+            : escapeHtml(dayLabel);
+          const exercises = day.exercises || [];
+          const rows = exercises
+            .map(
+              (ex) =>
+                `<tr><td>${escapeHtml(ex && ex.name != null ? String(ex.name) : "—")}</td><td>${
+                  ex && ex.sets != null ? String(ex.sets) : "—"
+                }</td><td>${ex && ex.reps != null ? String(ex.reps) : "—"}</td></tr>`
+            )
+            .join("");
+          return `<article class="meal-card"><h3>${title}</h3><table style="width:100%;border-collapse:collapse;font-size:0.9rem;"><thead><tr><th>Exercise</th><th>Sets</th><th>Reps</th></tr></thead><tbody>${rows}</tbody></table></article>`;
+        })
+        .join("");
+      return `<div class="section"><h2>Workout</h2>${prog}${notes}<div class="meals">${days}</div></div>`;
+    }
+
+    function renderOutput(data, workout, fullRaw) {
+      renderCenter(data, workout, fullRaw);
       renderInsights(data);
     }
 
-    function renderCenter(data) {
+    function renderCenter(data, workout, fullRaw) {
       const out = $("output-center");
       if (data.error) {
         out.innerHTML = `<div class="empty">Request returned an error. See banner and raw JSON.</div>`;
@@ -434,6 +470,7 @@ def build_js():
           </div>
         </div>
         ${mealsHtml}
+        ${workout !== undefined ? renderWorkoutHtml(workout) : ""}
         <div class="section">
           <h2>Raw response</h2>
           <div class="json-toggle" id="json-toggle">▶ Show full JSON</div>
@@ -441,7 +478,7 @@ def build_js():
         </div>
       `;
 
-      $("raw-json").textContent = JSON.stringify(data, null, 2);
+      $("raw-json").textContent = JSON.stringify(fullRaw != null ? fullRaw : data, null, 2);
       $("json-toggle").addEventListener("click", () => {
         const pre = $("raw-json");
         const t = $("json-toggle");
@@ -617,26 +654,28 @@ def build_js():
       showBanner("", "");
       setLoading(true, "gen");
       try {
-        const res = await fetch(`${API}/generate-diet`, {
+        const res = await fetch(`${API}/generate-full-plan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(buildGeneratePayload(false)),
         });
         const data = await res.json();
         lastResponse = data;
+        const dietData = data.diet !== undefined ? data.diet : data;
+        const workoutData = data.workout;
         if (!res.ok) {
           showBanner("error", data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`);
-          renderOutput({ error: true, ...data });
+          renderOutput({ error: true, ...data }, undefined, data);
           lastPlan = null;
         } else {
-          if (data.error) {
-            showBanner("error", data.error + (data.details ? ` — ${data.details}` : ""));
+          if (dietData.error) {
+            showBanner("error", dietData.error + (dietData.details ? ` — ${dietData.details}` : ""));
             lastPlan = null;
           } else {
             showBanner("ok", "Plan generated.");
-            lastPlan = data.plan || null;
+            lastPlan = dietData.plan || null;
           }
-          renderOutput(data);
+          renderOutput(dietData, workoutData, data);
         }
       } catch (e) {
         showBanner(
@@ -655,26 +694,28 @@ def build_js():
       showBanner("", "");
       setLoading(true, "sim");
       try {
-        const res = await fetch(`${API}/generate-diet`, {
+        const res = await fetch(`${API}/generate-full-plan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(buildGeneratePayload(true)),
         });
         const data = await res.json();
         lastResponse = data;
+        const dietData = data.diet !== undefined ? data.diet : data;
+        const workoutData = data.workout;
         if (!res.ok) {
           showBanner("error", data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`);
-          renderOutput({ error: true, ...data });
+          renderOutput({ error: true, ...data }, undefined, data);
           lastPlan = null;
         } else {
-          if (data.error) {
-            showBanner("error", data.error + (data.details ? ` — ${data.details}` : ""));
+          if (dietData.error) {
+            showBanner("error", dietData.error + (dietData.details ? ` — ${dietData.details}` : ""));
             lastPlan = null;
           } else {
             showBanner("ok", "Plan updated with adherence simulation.");
-            lastPlan = data.plan || null;
+            lastPlan = dietData.plan || null;
           }
-          renderOutput(data);
+          renderOutput(dietData, workoutData, data);
         }
       } catch (e) {
         showBanner("error", e.message);

@@ -13,7 +13,7 @@ import { createButton } from "../ui/button.js";
 
 /**
  * @param {HTMLElement} root
- * @param {{ onComplete: () => void, onStateChange?: () => void }} callbacks
+ * @param {{ onComplete: () => void | Promise<void>, onStateChange?: () => void }} callbacks
  */
 export function mountWizard(root, callbacks) {
   const state = initialState();
@@ -159,7 +159,7 @@ export function mountWizard(root, callbacks) {
     try {
       const body = mapPayloadFull(state);
       await postOnboard(body);
-      callbacks.onComplete();
+      await Promise.resolve(callbacks.onComplete?.());
     } catch (e) {
       submitError = e.message || String(e);
       render();

@@ -145,55 +145,11 @@ export function mountAuthRoot(container, { onAuthenticated }) {
 
   applyMode(parseHashMode());
 
-  /**
-   * Shown when signUp succeeds but no session yet (email confirmation required).
-   * @param {string} email
-   */
-  function showSignupEmailConfirmation(email) {
-    showError("");
-    form.hidden = true;
-    switchRow.hidden = true;
-    errHost.replaceChildren();
-
-    const panel = document.createElement("div");
-    panel.className = "auth-confirm-panel";
-    panel.setAttribute("role", "status");
-
-    const h = document.createElement("h2");
-    h.className = "heading-section auth-confirm-panel__title";
-    h.textContent = "Check your email";
-
-    const steps = document.createElement("ol");
-    steps.className = "auth-confirm-panel__steps field__hint";
-    const step1 = document.createElement("li");
-    step1.textContent = `We sent a confirmation link to ${email || "your inbox"}.`;
-    const step2 = document.createElement("li");
-    step2.textContent = "Open the email and click the link to confirm your account.";
-    const step3 = document.createElement("li");
-    step3.textContent = "Come back here and use Log in with the same email and password.";
-    steps.append(step1, step2, step3);
-
-    const back = document.createElement("button");
-    back.type = "button";
-    back.className = "btn btn--secondary";
-    back.textContent = "Back to log in";
-    back.addEventListener("click", () => {
-      form.hidden = false;
-      setHashMode("login");
-      applyMode("login");
-      showError("");
-    });
-
-    panel.append(h, steps, back);
-    errHost.appendChild(panel);
-  }
-
   const onHash = () => {
     applyMode(parseHashMode());
     showError("");
     form.hidden = false;
     switchRow.hidden = false;
-    errHost.querySelector(".auth-confirm-panel")?.remove();
   };
   window.addEventListener("hashchange", onHash);
 
@@ -243,7 +199,9 @@ export function mountAuthRoot(container, { onAuthenticated }) {
           onAuthenticated();
           return;
         }
-        showSignupEmailConfirmation(email);
+        showError(
+          "Sign up did not return a session. Try Log in with the same email and password, or use Continue with Google."
+        );
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
