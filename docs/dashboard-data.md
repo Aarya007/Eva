@@ -1,5 +1,7 @@
 # Dashboard data contract
 
+**Supabase:** Run [`supabase/eva_user_state.sql`](../supabase/eva_user_state.sql) for JSONB memory; run [`supabase/eva_onboarding.sql`](../supabase/eva_onboarding.sql) for typed onboarding columns. After onboarding routes save memory, the API upserts `eva_onboarding` when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set.
+
 ## Real API (default)
 
 | Region | Source | Notes |

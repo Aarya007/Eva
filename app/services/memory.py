@@ -1,5 +1,10 @@
 from app.core.config import EVA_DEBUG_AUTH
-from app.services.supabase_store import fetch_nested_state, is_persistence_enabled, upsert_nested_state
+from app.services.supabase_store import (
+    fetch_nested_state,
+    is_persistence_enabled,
+    upsert_nested_state,
+    upsert_onboarding_snapshot,
+)
 
 user_memory = {}
 
@@ -59,6 +64,8 @@ FIELD_TO_SECTION = {
     "food_usage_counts": "behavior",
     "last_plan_summary": "behavior",
     "last_calories": "behavior",
+    "last_tracker_adherence": "behavior",
+    "last_tracker_at": "behavior",
     "feedback_history": "feedback",
     "low_rated_foods": "feedback",
     "high_rated_foods": "feedback",
@@ -110,6 +117,8 @@ DEFAULT_MEMORY = {
     "goal_timeline_weeks": None,
     "display_name": "",
     "timezone": "",
+    "last_tracker_adherence": None,
+    "last_tracker_at": "",
 }
 
 # Virtual keys use prefixes __step_ for completion % only
@@ -169,7 +178,9 @@ def _persist_user_state(user_id: str) -> None:
         return
     if user_id not in user_memory:
         return
-    upsert_nested_state(user_id, user_memory[user_id])
+    nested = user_memory[user_id]
+    upsert_nested_state(user_id, nested)
+    upsert_onboarding_snapshot(user_id, flatten_user_record(nested))
 
 
 def flatten_user_record(nested: dict) -> dict:
@@ -598,3 +609,11 @@ def get_onboarding_status(user_id: str) -> dict:
         "onboarding_complete": bool(row.get("onboarding_complete")),
         "profile": profile_snapshot_for_client(row),
     }
+
+
+def profile_ready(user_id: str) -> bool:
+    """True when onboarding is marked complete and all wizard-tracked fields are filled."""
+    row = normalize_user_memory(get_user_data(user_id))
+    if not row.get("onboarding_complete"):
+        return False
+    return all(_onboarding_field_filled(k, row) for k in ONBOARDING_TRACKED_KEYS)

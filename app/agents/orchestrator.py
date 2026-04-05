@@ -13,14 +13,17 @@ class Orchestrator:
         result = self.diet_agent.run(user_data, calories, macros)
 
         if actual_meals:
+            plan = result.get("plan")
+            if not isinstance(plan, dict) or not isinstance(plan.get("meals"), list):
+                return result
             adherence = self.tracker_agent.run(
-                result["plan"]["meals"],
+                plan["meals"],
                 actual_meals,
             )
 
             recommendations = self.recommender_agent.run(
                 adherence,
-                result["plan"],
+                plan,
             )
 
             result["adherence"] = adherence

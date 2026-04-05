@@ -1,4 +1,5 @@
 -- Run in Supabase SQL Editor (Dashboard → SQL → New query).
+-- Suggested order: 1) this file  2) eva_onboarding.sql  3) eva_plans.sql (see app/api/.env.example).
 -- Persists per-user onboarding / memory state for the Eva FastAPI backend (service role).
 
 create table if not exists public.eva_user_state (
