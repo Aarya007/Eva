@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 # Load .env before any app imports
 _root = Path(__file__).resolve().parent.parent
-load_dotenv(_root / ".env")
+load_dotenv(_root / "app" / ".env")
 load_dotenv(_root / "app" / "api" / ".env", override=True)
 
 from fastapi import FastAPI, Request

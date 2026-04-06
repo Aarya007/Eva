@@ -1,7 +1,8 @@
 import logging
 from typing import Optional
 
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import PyJWTError
 from fastapi import HTTPException, Request
 
 from app.core.config import EVA_DEBUG_AUTH, SUPABASE_JWT_SECRET
@@ -58,13 +59,28 @@ def get_current_user(request: Request) -> str:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
+        header = jwt.get_unverified_header(token)
+        print(f"[eva auth] TOKEN HEADER: {header}", flush=True)
+
         payload = jwt.decode(
             token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            audience="authenticated",
+            options={"verify_signature": False, "verify_exp": True, "verify_aud": False},
         )
-    except JWTError as e:
+        
+        import httpx
+        from app.core.config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+        if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+            res = httpx.get(
+                f"{SUPABASE_URL.rstrip('/')}/auth/v1/user",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY
+                }
+            )
+            if res.status_code != 200:
+                print(f"[eva auth] Supabase API rejected token: {res.text}", flush=True)
+                raise PyJWTError("Supabase API rejected token validity")
+    except PyJWTError as e:
         print(f"[eva auth] JWT decode failed: {e!r}", flush=True)
         logger.warning("auth: JWT decode failed path=%s error=%s", path, e)
         raise HTTPException(

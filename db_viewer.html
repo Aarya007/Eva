@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Data Viewer</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 2rem; background: #f4f4f5; }
+        h1 { color: #18181b; }
+        h2 { color: #3f3f46; margin-top: 2rem; border-bottom: 2px solid #e4e4e7; padding-bottom: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); table-layout: fixed; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e4e4e7; vertical-align: top; word-wrap: break-word; }
+        th { background: #fafafa; font-weight: 600; color: #52525b; }
+        pre { margin: 0; font-size: 0.85em; max-height: 250px; overflow-y: auto; background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #eee; white-space: pre-wrap; word-wrap: break-word; }
+        .col-id { width: 20%; }
+        .col-date { width: 20%; }
+        .col-json { width: 60%; }
+    </style>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>📋 Eva Database Viewer (All Tables)</h1>
+        <button onclick="downloadData()" style="padding: 10px 16px; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">⬇️ Download Data as JSON</button>
+    </div>
+    
+    <h2>Table: eva_onboarding</h2>
+    <table>
+        <tr>
+            <th>User ID</th>
+            <th>Goal</th>
+            <th>Age</th>
+            <th>Gender</th>
+            <th>Completed?</th>
+            <th>Created At</th>
+        </tr>
+<tr><td>e4cb6725-f265-4ce2-93ac-96fe6db4cd84</td><td>maintenance</td><td>23</td><td>male</td><td>✅ Yes</td><td>2026-04-05T17:10:09.008096+00:00</td></tr><tr><td>test-user-id-123</td><td>test</td><td>None</td><td>None</td><td>✅ Yes</td><td>2026-04-05T16:50:04.9384+00:00</td></tr>
+    </table>
+
+    <h2>Table: eva_user_state (Full JSON)</h2>
+    <table>
+        <tr>
+            <th class="col-id">User ID</th>
+            <th class="col-date">Updated At</th>
+            <th class="col-json">State (JSON)</th>
+        </tr>
+<tr><td>e4cb6725-f265-4ce2-93ac-96fe6db4cd84</td><td>2026-04-05T17:10:08.245796+00:00</td><td><pre>{
+  "diet": {
+    "diet_type": "veg",
+    "disliked_foods": [
+      "laddies finger"
+    ],
+    "preferred_foods": [
+      "Paneer",
+      "Rice",
+      "1 Cup Cooked Oatmeal Made With 1 Cup Milk",
+      "1 Cup Cooked Quinoa",
+      "1 Cup Lentil Dal",
+      "1 Cup Mixed Vegetable Curry (Excluding Ladies Finger)",
+      "1 Cup Paneer Tikka Masala (Made With Low-Fat Paneer)",
+      "1 Cup Steamed Broccoli",
+      "1 Cup Yogurt (Plain, Unsweetened)",
+      "1 Glass Milk (240Ml)",
+      "1 Small Apple",
+      "1 Small Banana",
+      "1 Tablespoon Chopped Almonds",
+      "1.5 Cups Cooked Brown Rice",
+      "1/2 Cup Mixed Berries"
+    ]
+  },
+  "goals": {
+    "goal": "maintenance",
+    "activity_level": "moderate",
+    "target_weight_kg": 80.0,
+    "goal_timeline_weeks": 5
+  },
+  "fitness": {
+    "fitness_type": "home",
+    "training_intensity": "low"
+  },
+  "medical": {
+    "medical_none_ack": true
+  },
+  "behavior": {
+    "last_calories": 2300,
+    "food_usage_counts": {
+      "oats": 1,
+      "rice": 4,
+      "paneer": 6,
+      "1 small apple": 1,
+      "1 small banana": 1,
+      "1 cup lentil dal": 1,
+      "1 cup cooked quinoa": 1,
+      "1 glass milk (240ml)": 1,
+      "1/2 cup mixed berries": 1,
+      "1 cup steamed broccoli": 1,
+      "2 whole wheat crackers": 1,
+      "1.5 cups cooked brown rice": 1,
+      "1 tablespoon chopped almonds": 1,
+      "1/2 cup raita (yogurt-based)": 1,
+      "1 cup yogurt (plain, unsweetened)": 1,
+      "1 cup cooked oatmeal made with 1 cup milk": 1,
+      "1 cup paneer tikka masala (made with low-fat paneer)": 1,
+      "1 cup mixed vegetable curry (excluding ladies finger)": 1
+    },
+    "last_plan_summary": "Breakfast: 1 cup cooked oatmeal made with 1 cup milk, 1/2 cup mixed berries, 1 tablespoon chopped almonds, paneer, oats; Mid-Morning Snack: 1 cup yogurt (plain, unsweetened), 1 small apple, paneer, rice; Lunch: 1.5 cups cooked brown rice, 1 cup lentil dal, 1 cup mixed vegetable curry (excluding ladies finger), 1/2 cup raita (yogurt-based), paneer; Afternoon Snack: 1 glass milk (240ml), 2 whole wheat crackers, paneer, rice; Dinner: 1 cup cooked quinoa, 1 cup paneer tikka masala (made with low-fat paneer), 1 cup steamed broccoli, paneer, rice; Evening Snack: 1 small banana, paneer, rice"
+  },
+  "feedback": {},
+  "lifestyle": {
+    "sleep_hours": 10.0,
+    "stress_level": "medium",
+    "work_schedule": "mixed"
+  },
+  "basic_info": {
+    "age": 23,
+    "gender": "male",
+    "height": 175.0,
+    "weight": 50.0,
+    "onboarding_complete": true
+  },
+  "measurements": {
+    "measurements_na": true
+  },
+  "personalization": {
+    "timezone": "Asia/kolkata"
+  }
+}</pre></td></tr><tr><td>test-user-id-123</td><td>2026-04-05T16:50:03.927553+00:00</td><td><pre>{
+  "basic_info": {
+    "goal": "test"
+  }
+}</pre></td></tr>
+    </table>
+    
+    <h2>Table: diet_plans</h2>
+    <table>
+        <tr>
+            <th class="col-id">User ID</th>
+            <th class="col-date">Created At</th>
+            <th class="col-json">Diet Plan (JSON)</th>
+        </tr>
+<tr><td>e4cb6725-f265-4ce2-93ac-96fe6db4cd84</td><td>2026-04-05T17:12:24.518095+00:00</td><td><pre>{
+  "meals": [
+    {
+      "name": "Breakfast",
+      "items": [
+        "1 cup cooked oatmeal made with 1 cup milk",
+        "1/2 cup mixed berries",
+        "1 tablespoon chopped almonds",
+        "paneer",
+        "oats"
+      ],
+      "protein": 23,
+      "calories": 400,
+      "target_calories": 689
+    },
+    {
+      "name": "Mid-Morning Snack",
+      "items": [
+        "1 cup yogurt (plain, unsweetened)",
+        "1 small apple",
+        "paneer",
+        "rice"
+      ],
+      "protein": 22,
+      "calories": 450,
+      "target_calories": 766
+    },
+    {
+      "name": "Lunch",
+      "items": [
+        "1.5 cups cooked brown rice",
+        "1 cup lentil dal",
+        "1 cup mixed vegetable curry (excluding ladies finger)",
+        "1/2 cup raita (yogurt-based)",
+        "paneer"
+      ],
+      "protein": 18,
+      "calories": 250,
+      "target_calories": 919
+    },
+    {
+      "name": "Afternoon Snack",
+      "items": [
+        "1 glass milk (240ml)",
+        "2 whole wheat crackers",
+        "paneer",
+        "rice"
+      ],
+      "protein": 22,
+      "calories": 450,
+      "target_calories": 766
+    },
+    {
+      "name": "Dinner",
+      "items": [
+        "1 cup cooked quinoa",
+        "1 cup paneer tikka masala (made with low-fat paneer)",
+        "1 cup steamed broccoli",
+        "paneer",
+        "rice"
+      ],
+      "protein": 22,
+      "calories": 450,
+      "target_calories": 689
+    },
+    {
+      "name": "Evening Snack",
+      "items": [
+        "1 small banana",
+        "paneer",
+        "rice"
+      ],
+      "protein": 22,
+      "calories": 450,
+      "target_calories": 766
+    }
+  ],
+  "quality": {
+    "score": 89,
+    "details": {
+      "balance": 97,
+      "diversity": 69,
+      "simplicity": 100
+    },
+    "selection": {
+      "preference_bonus": 10,
+      "repetition_penalty": 5,
+      "simplicity_penalty": 0
+    },
+    "final_score": 94
+  }
+}</pre></td></tr>
+    </table>
+    
+    <h2>Table: workout_plans</h2>
+    <table>
+        <tr>
+            <th class="col-id">User ID</th>
+            <th class="col-date">Created At</th>
+            <th class="col-json">Workout Plan (JSON)</th>
+        </tr>
+<tr><td>e4cb6725-f265-4ce2-93ac-96fe6db4cd84</td><td>2026-04-05T17:12:26.67727+00:00</td><td><pre>{
+  "notes": "Listen to your body. If you feel any pain, stop the exercise. Ensure proper form over quantity. Aim for 60-90 seconds of rest between sets. Hydrate well, especially with your preferred milk intake. Ensure your vegetarian diet is balanced to support your maintenance goal.",
+  "progression": "For bodyweight exercises, aim to increase reps within the given range. Once you can comfortably hit the higher end of the rep range for all sets, consider progressing to a slightly harder variation (e.g., from incline push-ups to regular push-ups). For exercises using weights (water bottles/books), gradually increase the weight by adding more water or using heavier books when you can comfortably complete all sets and reps. For planks, increase the hold time by 5-10 seconds each week.",
+  "weekly_plan": [
+    {
+      "day": "Day 1",
+      "focus": "Upper Body - Push",
+      "exercises": [
+        {
+          "name": "Incline Push-ups",
+          "reps": "10-12",
+          "sets": 3
+        },
+        {
+          "name": "Dumbbell Chest Press (using water bottles/heavy books)",
+          "reps": "10-12",
+          "sets": 3
+        },
+        {
+          "name": "Overhead Triceps Extension (using water bottle)",
+          "reps": "12-15",
+          "sets": 3
+        },
+        {
+          "name": "Triceps Dips (using chair)",
+          "reps": "10-12",
+          "sets": 3
+        }
+      ]
+    },
+    {
+      "day": "Day 2",
+      "focus": "Lower Body + Core",
+      "exercises": [
+        {
+          "name": "Bodyweight Squats",
+          "reps": "15-20",
+          "sets": 3
+        },
+        {
+          "name": "Glute Bridges",
+          "reps": "15-20",
+          "sets": 3
+        },
+        {
+          "name": "Calf Raises",
+          "reps": "20-25",
+          "sets": 3
+        },
+        {
+          "name": "Plank",
+          "reps": "30-45 seconds",
+          "sets": 3
+        },
+        {
+          "name": "Crunches",
+          "reps": "15-20",
+          "sets": 3
+        }
+      ]
+    },
+    {
+      "day": "Day 3",
+      "focus": "Upper Body - Pull",
+      "exercises": [
+        {
+          "name": "Inverted Rows (using sturdy table or low bar)",
+          "reps": "8-10",
+          "sets": 3
+        },
+        {
+          "name": "Dumbbell Rows (using water bottles/heavy books)",
+          "reps": "10-12 per arm",
+          "sets": 3
+        },
+        {
+          "name": "Bicep Curls (using water bottles/heavy books)",
+          "reps": "12-15",
+          "sets": 3
+        },
+        {
+          "name": "Hammer Curls (using water bottles/heavy books)",
+          "reps": "12-15",
+          "sets": 3
+        }
+      ]
+    },
+    {
+      "day": "Day 4",
+      "focus": "Active Recovery / Light Cardio",
+      "exercises": [
+        {
+          "name": "Brisk Walking or Light Jogging (if possible)",
+          "reps": "30 minutes",
+          "sets": 1
+        },
+        {
+          "name": "Stretching (focus on major muscle groups)",
+          "reps": "15-20 minutes",
+          "sets": 1
+        }
+      ]
+    },
+    {
+      "day": "Day 5",
+      "focus": "Full Body Circuit",
+      "exercises": [
+        {
+          "name": "Bodyweight Squats",
+          "reps": "12-15",
+          "sets": 3
+        },
+        {
+          "name": "Push-ups (on knees if needed)",
+          "reps": "10-12",
+          "sets": 3
+        },
+        {
+          "name": "Lunges (alternating legs)",
+          "reps": "10-12 per leg",
+          "sets": 3
+        },
+        {
+          "name": "Plank",
+          "reps": "30-45 seconds",
+          "sets": 3
+        },
+        {
+          "name": "Dumbbell Rows (using water bottles/heavy books)",
+          "reps": "10-12 per arm",
+          "sets": 3
+        }
+      ]
+    },
+    {
+      "day": "Day 6",
+      "reps": "0",
+      "sets": 0,
+      "focus": "Rest",
+      "exercises": []
+    },
+    {
+      "day": "Day 7",
+      "reps": "0",
+      "sets": 0,
+      "focus": "Rest",
+      "exercises": []
+    }
+  ]
+}</pre></td></tr>
+    </table>
+    
+    <script>
+        // Store the raw data for downloading
+        const rawData = {
+            "eva_onboarding": [{"user_id": "e4cb6725-f265-4ce2-93ac-96fe6db4cd84", "goal": "maintenance", "age": 23, "gender": "male", "onboarding_complete": true, "created_at": "2026-04-05T17:10:09.008096+00:00"}, {"user_id": "test-user-id-123", "goal": "test", "age": null, "gender": null, "onboarding_complete": true, "created_at": "2026-04-05T16:50:04.9384+00:00"}],
+            "eva_user_state": [{"user_id": "e4cb6725-f265-4ce2-93ac-96fe6db4cd84", "state": {"diet": {"diet_type": "veg", "disliked_foods": ["laddies finger"], "preferred_foods": ["Paneer", "Rice", "1 Cup Cooked Oatmeal Made With 1 Cup Milk", "1 Cup Cooked Quinoa", "1 Cup Lentil Dal", "1 Cup Mixed Vegetable Curry (Excluding Ladies Finger)", "1 Cup Paneer Tikka Masala (Made With Low-Fat Paneer)", "1 Cup Steamed Broccoli", "1 Cup Yogurt (Plain, Unsweetened)", "1 Glass Milk (240Ml)", "1 Small Apple", "1 Small Banana", "1 Tablespoon Chopped Almonds", "1.5 Cups Cooked Brown Rice", "1/2 Cup Mixed Berries"]}, "goals": {"goal": "maintenance", "activity_level": "moderate", "target_weight_kg": 80.0, "goal_timeline_weeks": 5}, "fitness": {"fitness_type": "home", "training_intensity": "low"}, "medical": {"medical_none_ack": true}, "behavior": {"last_calories": 2300, "food_usage_counts": {"oats": 1, "rice": 4, "paneer": 6, "1 small apple": 1, "1 small banana": 1, "1 cup lentil dal": 1, "1 cup cooked quinoa": 1, "1 glass milk (240ml)": 1, "1/2 cup mixed berries": 1, "1 cup steamed broccoli": 1, "2 whole wheat crackers": 1, "1.5 cups cooked brown rice": 1, "1 tablespoon chopped almonds": 1, "1/2 cup raita (yogurt-based)": 1, "1 cup yogurt (plain, unsweetened)": 1, "1 cup cooked oatmeal made with 1 cup milk": 1, "1 cup paneer tikka masala (made with low-fat paneer)": 1, "1 cup mixed vegetable curry (excluding ladies finger)": 1}, "last_plan_summary": "Breakfast: 1 cup cooked oatmeal made with 1 cup milk, 1/2 cup mixed berries, 1 tablespoon chopped almonds, paneer, oats; Mid-Morning Snack: 1 cup yogurt (plain, unsweetened), 1 small apple, paneer, rice; Lunch: 1.5 cups cooked brown rice, 1 cup lentil dal, 1 cup mixed vegetable curry (excluding ladies finger), 1/2 cup raita (yogurt-based), paneer; Afternoon Snack: 1 glass milk (240ml), 2 whole wheat crackers, paneer, rice; Dinner: 1 cup cooked quinoa, 1 cup paneer tikka masala (made with low-fat paneer), 1 cup steamed broccoli, paneer, rice; Evening Snack: 1 small banana, paneer, rice"}, "feedback": {}, "lifestyle": {"sleep_hours": 10.0, "stress_level": "medium", "work_schedule": "mixed"}, "basic_info": {"age": 23, "gender": "male", "height": 175.0, "weight": 50.0, "onboarding_complete": true}, "measurements": {"measurements_na": true}, "personalization": {"timezone": "Asia/kolkata"}}, "updated_at": "2026-04-05T17:10:08.245796+00:00"}, {"user_id": "test-user-id-123", "state": {"basic_info": {"goal": "test"}}, "updated_at": "2026-04-05T16:50:03.927553+00:00"}],
+            "diet_plans": [{"user_id": "e4cb6725-f265-4ce2-93ac-96fe6db4cd84", "plan": {"meals": [{"name": "Breakfast", "items": ["1 cup cooked oatmeal made with 1 cup milk", "1/2 cup mixed berries", "1 tablespoon chopped almonds", "paneer", "oats"], "protein": 23, "calories": 400, "target_calories": 689}, {"name": "Mid-Morning Snack", "items": ["1 cup yogurt (plain, unsweetened)", "1 small apple", "paneer", "rice"], "protein": 22, "calories": 450, "target_calories": 766}, {"name": "Lunch", "items": ["1.5 cups cooked brown rice", "1 cup lentil dal", "1 cup mixed vegetable curry (excluding ladies finger)", "1/2 cup raita (yogurt-based)", "paneer"], "protein": 18, "calories": 250, "target_calories": 919}, {"name": "Afternoon Snack", "items": ["1 glass milk (240ml)", "2 whole wheat crackers", "paneer", "rice"], "protein": 22, "calories": 450, "target_calories": 766}, {"name": "Dinner", "items": ["1 cup cooked quinoa", "1 cup paneer tikka masala (made with low-fat paneer)", "1 cup steamed broccoli", "paneer", "rice"], "protein": 22, "calories": 450, "target_calories": 689}, {"name": "Evening Snack", "items": ["1 small banana", "paneer", "rice"], "protein": 22, "calories": 450, "target_calories": 766}], "quality": {"score": 89, "details": {"balance": 97, "diversity": 69, "simplicity": 100}, "selection": {"preference_bonus": 10, "repetition_penalty": 5, "simplicity_penalty": 0}, "final_score": 94}}, "created_at": "2026-04-05T17:12:24.518095+00:00"}],
+            "workout_plans": [{"user_id": "e4cb6725-f265-4ce2-93ac-96fe6db4cd84", "plan": {"notes": "Listen to your body. If you feel any pain, stop the exercise. Ensure proper form over quantity. Aim for 60-90 seconds of rest between sets. Hydrate well, especially with your preferred milk intake. Ensure your vegetarian diet is balanced to support your maintenance goal.", "progression": "For bodyweight exercises, aim to increase reps within the given range. Once you can comfortably hit the higher end of the rep range for all sets, consider progressing to a slightly harder variation (e.g., from incline push-ups to regular push-ups). For exercises using weights (water bottles/books), gradually increase the weight by adding more water or using heavier books when you can comfortably complete all sets and reps. For planks, increase the hold time by 5-10 seconds each week.", "weekly_plan": [{"day": "Day 1", "focus": "Upper Body - Push", "exercises": [{"name": "Incline Push-ups", "reps": "10-12", "sets": 3}, {"name": "Dumbbell Chest Press (using water bottles/heavy books)", "reps": "10-12", "sets": 3}, {"name": "Overhead Triceps Extension (using water bottle)", "reps": "12-15", "sets": 3}, {"name": "Triceps Dips (using chair)", "reps": "10-12", "sets": 3}]}, {"day": "Day 2", "focus": "Lower Body + Core", "exercises": [{"name": "Bodyweight Squats", "reps": "15-20", "sets": 3}, {"name": "Glute Bridges", "reps": "15-20", "sets": 3}, {"name": "Calf Raises", "reps": "20-25", "sets": 3}, {"name": "Plank", "reps": "30-45 seconds", "sets": 3}, {"name": "Crunches", "reps": "15-20", "sets": 3}]}, {"day": "Day 3", "focus": "Upper Body - Pull", "exercises": [{"name": "Inverted Rows (using sturdy table or low bar)", "reps": "8-10", "sets": 3}, {"name": "Dumbbell Rows (using water bottles/heavy books)", "reps": "10-12 per arm", "sets": 3}, {"name": "Bicep Curls (using water bottles/heavy books)", "reps": "12-15", "sets": 3}, {"name": "Hammer Curls (using water bottles/heavy books)", "reps": "12-15", "sets": 3}]}, {"day": "Day 4", "focus": "Active Recovery / Light Cardio", "exercises": [{"name": "Brisk Walking or Light Jogging (if possible)", "reps": "30 minutes", "sets": 1}, {"name": "Stretching (focus on major muscle groups)", "reps": "15-20 minutes", "sets": 1}]}, {"day": "Day 5", "focus": "Full Body Circuit", "exercises": [{"name": "Bodyweight Squats", "reps": "12-15", "sets": 3}, {"name": "Push-ups (on knees if needed)", "reps": "10-12", "sets": 3}, {"name": "Lunges (alternating legs)", "reps": "10-12 per leg", "sets": 3}, {"name": "Plank", "reps": "30-45 seconds", "sets": 3}, {"name": "Dumbbell Rows (using water bottles/heavy books)", "reps": "10-12 per arm", "sets": 3}]}, {"day": "Day 6", "reps": "0", "sets": 0, "focus": "Rest", "exercises": []}, {"day": "Day 7", "reps": "0", "sets": 0, "focus": "Rest", "exercises": []}]}, "created_at": "2026-04-05T17:12:26.67727+00:00"}]
+        };
+
+        function downloadData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawData, null, 2));
+            const dlAnchorElem = document.getElementById('downloadAnchorElem');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "eva_database_dump.json");
+            dlAnchorElem.click();
+        }
+    </script>
+    <a id="downloadAnchorElem" style="display:none"></a>
+</body>
+</html>
