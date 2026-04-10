@@ -1,5 +1,8 @@
-import "./css/layout.css";
-import "./css/components.css";
+import "./style/tokens.css";
+import "./style/base.css";
+import "./style/layout.css";
+import "./style/components.css";
+import "./style/animations.css";
 import "./css/auth.css";
 
 import { getSupabase, isSupabaseConfigured } from "./js/auth/supabaseClient.js";
@@ -19,6 +22,25 @@ let lastProfile = null;
 
 function $(id) {
   return document.getElementById(id);
+}
+
+function getOrCreateAppRoot() {
+  let app = $("app");
+  if (!app) {
+    app = document.createElement("div");
+    app.id = "app";
+    document.body.appendChild(app);
+  }
+  return app;
+}
+
+function dismissSplash() {
+  const splash = $("splash");
+  if (!splash) return;
+  splash.classList.add("fade-out");
+  window.setTimeout(() => {
+    splash.remove();
+  }, 850);
 }
 
 function showTab(name) {
@@ -224,7 +246,7 @@ async function runGenerate(simulate, options = {}) {
 }
 
 function mountMainApp() {
-  const app = $("app");
+  const app = getOrCreateAppRoot();
   app.innerHTML = `
     <div class="app-shell">
       <header class="app-topbar">
@@ -358,7 +380,8 @@ function mountMainApp() {
 }
 
 function bootstrap() {
-  const app = $("app");
+  dismissSplash();
+  const app = getOrCreateAppRoot();
   if (!isSupabaseConfigured()) {
     app.innerHTML = "";
     app.appendChild(

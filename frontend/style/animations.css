@@ -1,0 +1,165 @@
+/* ═══════════════════════════════════════════
+   EVA — ANIMATIONS
+   Keyframes, transitions, stagger system
+   ═══════════════════════════════════════════ */
+
+/* ── Screen entrance ── */
+@keyframes screenIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Wordmark entrance ── */
+@keyframes wordmarkIn {
+  from {
+    letter-spacing: 0.6em;
+    opacity: 0;
+  }
+  to {
+    letter-spacing: 0.3em;
+    opacity: 1;
+  }
+}
+
+/* ── Gold line expand ── */
+@keyframes lineExpand {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Loading bar fill ── */
+@keyframes barFill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* ── Fade up ── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Rotate ── */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Pulse ── */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+/* ── Fade out (splash) ── */
+@keyframes splashOut {
+  to {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+/* ── Status text cycle ── */
+@keyframes statusFade {
+  0%, 90% { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+/* ═══ Stagger fade-in system ═══ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s var(--ease-entrance),
+              transform 0.5s var(--ease-entrance);
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Screen active animation ── */
+.screen.active,
+.screen.is-active {
+  animation: screenIn 0.6s var(--ease-entrance);
+}
+
+/* ── Splash elements ── */
+.splash-wordmark {
+  font-family: var(--font-display);
+  font-size: 96px;
+  font-weight: 300;
+  color: var(--gold);
+  animation: wordmarkIn 1.2s var(--ease-entrance) both;
+}
+.splash-rule {
+  width: 160px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: lineExpand 0.8s var(--ease-entrance) 0.6s both;
+}
+.splash-tagline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeUp 0.5s var(--ease-entrance) 0.8s both;
+}
+.splash-bar-track {
+  width: 200px;
+  height: 1px;
+  background: var(--border);
+  margin-top: var(--sp-6);
+  opacity: 0;
+  animation: fadeUp 0.3s var(--ease-entrance) 1.0s both;
+}
+.splash-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  width: 0;
+  transition: width 0.1s linear;
+}
+.splash-percent {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gold-dim);
+  letter-spacing: 0.1em;
+  margin-top: var(--sp-2);
+  opacity: 0;
+  animation: fadeUp 0.3s var(--ease-entrance) 1.0s both;
+}
+
+/* ── Generate modal spinner ── */
+.modal-spinner {
+  width: 48px;
+  height: 48px;
+  animation: rotate 2s linear infinite;
+}
+
+/* ── Hover transition defaults ── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

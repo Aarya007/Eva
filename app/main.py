@@ -10,9 +10,9 @@ load_dotenv(_root / "app" / "api" / ".env", override=True)
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.api.routes import router
-from app.core.auth import get_current_user
-from app.services.supabase_store import SupabasePersistError, is_persistence_enabled
+from api.routes import router
+from core.auth import get_current_user
+from services.supabase_store import SupabasePersistError, is_persistence_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -86,3 +86,7 @@ def test_auth(request: Request):
     """Development-only: verify Bearer token resolves to user_id. Do not rely on this in production."""
     user_id = get_current_user(request)
     return {"user_id": user_id}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

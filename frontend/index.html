@@ -2,11 +2,774 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Eva — Onboarding &amp; Diet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Eva — AI-powered fitness and nutrition intelligence. Premium workout and diet planning powered by Gemini AI." />
+  <title>Eva — Fitness & Nutrition Intelligence</title>
+
+  <!-- Google Fonts — preconnect for perf -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=block" rel="stylesheet" />
+
+  <!-- Design system -->
+  <link rel="stylesheet" href="/style/tokens.css" />
+  <link rel="stylesheet" href="/style/base.css" />
+  <link rel="stylesheet" href="/style/layout.css" />
+  <link rel="stylesheet" href="/style/components.css" />
+  <link rel="stylesheet" href="/style/animations.css" />
+  <link rel="stylesheet" href="/style/screens.css" />
 </head>
-<body class="app-body">
-  <div id="app"></div>
-  <script type="module" src="/main.js"></script>
+<body>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SPLASH SCREEN                          -->
+<!-- ═══════════════════════════════════════ -->
+<div id="splash">
+  <div class="splash-wordmark">Eva</div>
+  <div class="splash-rule"></div>
+  <div class="splash-tagline">Intelligence · Nutrition · Performance</div>
+  <div class="splash-bar-track">
+    <div class="splash-bar-fill" id="splash-bar"></div>
+  </div>
+  <div class="splash-percent" id="splash-pct">0%</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- GENERATE MODAL (full-screen overlay)   -->
+<!-- ═══════════════════════════════════════ -->
+<div id="gen-modal" class="gen-modal" style="display:none;">
+  <svg class="modal-spinner" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+    <path d="M24 4 A20 20 0 0 1 44 24" stroke="#C8AA64" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  <div class="gen-modal-title">Generating Your Plan</div>
+  <div class="gen-modal-status" id="gen-status">Analysing your profile...</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- AUTH SCREEN                            -->
+<!-- ═══════════════════════════════════════ -->
+<div id="auth-screen" style="display:none;">
+  <div class="auth-screen">
+    <div style="text-align:center;">
+      <div style="font-family:var(--font-display);font-size:48px;font-weight:300;color:var(--gold);letter-spacing:0.2em;margin-bottom:8px;">Eva</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.3em;text-transform:uppercase;">Intelligence · Nutrition · Performance</div>
+    </div>
+    <div class="auth-card panel panel-gold">
+      <div class="panel-body" style="padding:32px;">
+        <div class="auth-title">Welcome Back</div>
+        <div class="auth-sub">Sign in to continue</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="input-wrap">
+            <label class="input-label" for="auth-email">Email</label>
+            <input type="email" id="auth-email" class="input-field" placeholder="you@example.com" />
+          </div>
+          <div class="input-wrap">
+            <label class="input-label" for="auth-password">Password</label>
+            <input type="password" id="auth-password" class="input-field" placeholder="••••••••" />
+          </div>
+          <div id="auth-error" style="font-family:var(--font-mono);font-size:10px;color:var(--red);display:none;"></div>
+          <button id="btn-signin" class="btn btn-gold btn-full" style="margin-top:8px;">Sign In →</button>
+          <div class="divider-gold"></div>
+          <button id="btn-google" class="btn btn-outline btn-full">Continue with Google</button>
+          <button id="btn-signup-toggle" class="btn btn-ghost btn-full">Create Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- APP SHELL                              -->
+<!-- ═══════════════════════════════════════ -->
+<div id="app-shell" style="display:none;">
+  <div class="app-shell">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">E</div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-top">
+
+          <!-- Dashboard -->
+          <button class="nav-item active" data-screen="dashboard" id="nav-dashboard" aria-label="Dashboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span class="nav-tooltip">Dashboard</span>
+          </button>
+
+          <!-- Plans -->
+          <button class="nav-item" data-screen="plans" id="nav-plans" aria-label="Plans">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+            </svg>
+            <span class="nav-tooltip">Plans</span>
+          </button>
+
+          <!-- Generate -->
+          <button class="nav-item" data-screen="generate" id="nav-generate" aria-label="Generate">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span class="nav-tooltip">Generate</span>
+          </button>
+
+          <!-- Track -->
+          <button class="nav-item" data-screen="track" id="nav-track" aria-label="Track">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <span class="nav-tooltip">Track</span>
+          </button>
+
+        </div>
+        <div class="sidebar-nav-bottom">
+
+          <!-- Profile -->
+          <button class="nav-item" data-screen="profile" id="nav-profile" aria-label="Profile">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span class="nav-tooltip">Profile</span>
+          </button>
+
+          <button class="nav-item" id="btn-signout-dashboard" aria-label="Sign Out" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span class="nav-tooltip">Sign Out</span>
+          </button>
+
+          <!-- RAM-only mode banner -->
+          <div id="persist-banner" class="persist-banner" style="display:none;">
+            ⚠ RAM
+            <div class="persist-banner-tooltip">
+              Supabase persistence is disabled. Plans exist in memory only and will be lost on server restart.
+            </div>
+          </div>
+
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ── Main content ── -->
+    <main class="main" id="main-content">
+
+      <!-- ══════════════════════════════════ -->
+      <!-- SCREEN: ONBOARDING               -->
+      <!-- ══════════════════════════════════ -->
+      <div id="screen-onboarding" class="screen">
+        <div class="onboard-card panel panel-gold fade-in">
+          <div class="panel-body" style="padding:32px;">
+            <div class="onboard-progress-bar">
+              <div class="onboard-progress-fill" id="onboard-prog-fill" style="width:25%;"></div>
+            </div>
+            <div class="onboard-step-indicator" id="onboard-step-label">Step 1 of 4</div>
+            <div class="onboard-title" id="onboard-title">Tell us about yourself</div>
+            <div class="onboard-body" id="onboard-body">
+              <!-- filled by onboarding.js -->
+            </div>
+            <div class="onboard-footer">
+              <button id="onboard-back" class="btn btn-ghost btn-sm" style="opacity:0;pointer-events:none;">← Back</button>
+              <button id="onboard-next" class="btn btn-gold btn-sm">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════ -->
+      <!-- SCREEN: DASHBOARD                 -->
+      <!-- ══════════════════════════════════ -->
+      <div id="screen-dashboard" class="screen">
+
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+          <div class="hero-watermark">EVA</div>
+          <div class="hero-greeting" id="dash-greeting">Good morning,</div>
+          <div class="hero-name" id="dash-name">—</div>
+          <div class="hero-meta">
+            <div class="hero-streak">
+              <span class="hero-streak-icon">◈</span>
+              <span class="hero-streak-num" id="dash-streak">0</span>
+              <span class="hero-streak-label">Day Streak</span>
+            </div>
+            <div class="divider-v"></div>
+            <div class="hero-goal" id="dash-goal">Loading goal...</div>
+          </div>
+          <div class="hero-status">
+            <span class="badge badge-green" id="dash-status-badge">● On Track</span>
+          </div>
+        </div>
+
+        <div class="content-pad">
+
+          <!-- Today's Vitals -->
+          <div class="panel section-gap fade-in">
+            <div class="panel-header">
+              <span class="panel-title">Today's Vitals</span>
+              <span class="badge badge-muted" id="dash-date">—</span>
+            </div>
+            <div class="grid-4">
+              <!-- Calories -->
+              <div class="stat-card fade-in">
+                <div class="stat-label">Calories</div>
+                <div>
+                  <span class="stat-value" id="cal-val" style="font-size:52px;">0</span>
+                  <span class="stat-unit" id="cal-target">/ —</span>
+                </div>
+                <div class="stat-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill" id="cal-bar" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="stat-delta" id="cal-pct">—%</div>
+              </div>
+              <!-- Protein -->
+              <div class="stat-card fade-in">
+                <div class="stat-label">Protein</div>
+                <div>
+                  <span class="stat-value" id="prot-val" style="font-size:52px;">0</span>
+                  <span class="stat-unit">g</span>
+                </div>
+                <div class="stat-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill" id="prot-bar" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="stat-delta" id="prot-pct">—%</div>
+              </div>
+              <!-- Hydration -->
+              <div class="stat-card fade-in">
+                <div class="stat-label">Hydration</div>
+                <div>
+                  <span class="stat-value" id="hydro-val" style="font-size:52px;">0</span>
+                  <span class="stat-unit">L</span>
+                </div>
+                <div class="stat-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill progress-fill-cyan" id="hydro-bar" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="stat-delta" id="hydro-pct">—%</div>
+              </div>
+              <!-- Body Weight -->
+              <div class="stat-card fade-in">
+                <div class="stat-label">Body Weight</div>
+                <div>
+                  <span class="stat-value" id="weight-val" style="font-size:52px;">—</span>
+                  <span class="stat-unit">kg</span>
+                </div>
+                <div class="stat-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill progress-fill-green" style="width:100%"></div>
+                  </div>
+                </div>
+                <div class="stat-delta" id="weight-delta">Logged</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workout + Insights + Meals grid -->
+          <div class="grid-2 section-gap">
+            <!-- Left: Today's Workout -->
+            <div class="panel fade-in">
+              <div class="panel-header">
+                <span class="panel-title">Today's Workout</span>
+                <span class="badge badge-gold" id="workout-day-badge">—</span>
+              </div>
+              <div class="panel-body" id="dash-workout-list">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:32px 0;">
+                  Generate a plan to see your workout
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Insight + Meals -->
+            <div class="stack">
+              <!-- AI Insight -->
+              <div class="insight-card fade-in">
+                <div class="insight-eyebrow">
+                  <div class="insight-dot"></div>
+                  Eva · AI Coach
+                </div>
+                <div class="insight-text" id="dash-insight">
+                  "Your training demands precision. Generate a plan to receive personalised guidance calibrated to your physiology."
+                </div>
+              </div>
+
+              <!-- Today's Meals -->
+              <div class="panel fade-in">
+                <div class="panel-header">
+                  <span class="panel-title">Meal Plan · Today</span>
+                  <span class="badge badge-muted" id="dash-meal-total-cal">— kcal</span>
+                </div>
+                <div class="panel-body" id="dash-meal-list">
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0;">
+                    Generate a plan to see your meals
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Caloric Adherence chart -->
+          <div class="panel fade-in">
+            <div class="panel-header">
+              <span class="panel-title">Weekly Caloric Adherence</span>
+              <div style="display:flex;gap:16px;align-items:center;">
+                <span style="font-family:var(--font-mono);font-size:9px;color:var(--gold);letter-spacing:0.1em;">— Target</span>
+                <span style="font-family:var(--font-mono);font-size:9px;color:var(--silver);letter-spacing:0.1em;">— Actual</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <svg id="weekly-chart" width="100%" height="120" viewBox="0 0 700 120" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════ -->
+      <!-- SCREEN: PLANS                     -->
+      <!-- ══════════════════════════════════ -->
+      <div id="screen-plans" class="screen">
+        <div class="page-header">
+          <div class="page-header-left">
+            <div class="page-eyebrow">Eva · Active Plan</div>
+            <h1 class="page-title">Active Plan</h1>
+          </div>
+          <div class="page-header-actions">
+            <div id="plans-warning-badge" style="display:none;"></div>
+            <button class="btn btn-ghost btn-sm" id="btn-export">Export ↗</button>
+            <button class="btn btn-outline btn-sm" id="btn-regen-plan">Regenerate →</button>
+          </div>
+        </div>
+
+        <div class="content-pad">
+          <!-- Day tabs -->
+          <div class="plan-day-tabs" id="plan-day-tabs">
+            <button class="plan-day-tab active" data-day="0">Monday</button>
+            <button class="plan-day-tab" data-day="1">Tuesday</button>
+            <button class="plan-day-tab" data-day="2">Wednesday</button>
+            <button class="plan-day-tab" data-day="3">Thursday</button>
+            <button class="plan-day-tab" data-day="4">Friday</button>
+            <button class="plan-day-tab" data-day="5">Saturday</button>
+            <button class="plan-day-tab" data-day="6">Sunday</button>
+          </div>
+
+          <div class="grid-2">
+            <!-- Left: Workout -->
+            <div class="panel fade-in">
+              <div class="panel-header">
+                <span class="panel-title" id="plan-workout-header">Workout</span>
+                <span class="badge badge-gold" id="plan-day-badge">—</span>
+              </div>
+              <div class="panel-body" id="plan-exercise-list">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:40px 0;">
+                  No plan generated yet
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Diet + Coach Note -->
+            <div class="stack">
+              <!-- Diet Plan -->
+              <div class="panel panel-gold fade-in">
+                <div class="panel-header">
+                  <span class="panel-title">Diet Plan · Today</span>
+                  <span class="badge badge-gold" id="plan-diet-kcal">— kcal</span>
+                </div>
+                <div class="panel-body" id="plan-meal-list">
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0;">
+                    No diet plan yet
+                  </div>
+                </div>
+                <div class="panel-footer">
+                  <div class="macro-grid" id="plan-macros">
+                    <div>
+                      <div class="macro-label">Protein</div>
+                      <div class="macro-value" id="plan-macro-p">—</div>
+                    </div>
+                    <div>
+                      <div class="macro-label">Carbs</div>
+                      <div class="macro-value" id="plan-macro-c">—</div>
+                    </div>
+                    <div>
+                      <div class="macro-label">Fat</div>
+                      <div class="macro-value" id="plan-macro-f">—</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Eva Coach Note -->
+              <div class="insight-card fade-in">
+                <div class="insight-eyebrow">
+                  <div class="insight-dot"></div>
+                  Eva · Coach Note
+                </div>
+                <div class="insight-text insight-text-sm" id="plan-coach-note">
+                  "Select a day to view your personalised workout and nutrition plan."
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════ -->
+      <!-- SCREEN: GENERATE                  -->
+      <!-- ══════════════════════════════════ -->
+      <div id="screen-generate" class="screen">
+        <div class="page-header">
+          <div class="page-header-left">
+            <div class="page-eyebrow">Eva · AI Engine</div>
+            <h1 class="page-title">Generate Plan</h1>
+          </div>
+        </div>
+
+        <div class="content-pad">
+          <div class="grid-2-1">
+            <!-- Left: Preferences -->
+            <div class="stack">
+              <div class="panel fade-in">
+                <div class="panel-header">
+                  <span class="panel-title">Preferences Override</span>
+                </div>
+                <div class="panel-body">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                    <div class="input-wrap">
+                      <label class="input-label" for="gen-goal">Goal</label>
+                      <select class="input-field" id="gen-goal">
+                        <option value="">Use profile setting</option>
+                        <option value="muscle_gain">Muscle Gain</option>
+                        <option value="fat_loss">Fat Loss</option>
+                        <option value="recomp">Recomposition</option>
+                        <option value="endurance">Endurance</option>
+                        <option value="maintenance">Maintenance</option>
+                      </select>
+                    </div>
+                    <div class="input-wrap">
+                      <label class="input-label" for="gen-days">Training Days / Week</label>
+                      <select class="input-field" id="gen-days">
+                        <option value="">Use profile setting</option>
+                        <option value="3">3 days</option>
+                        <option value="4">4 days</option>
+                        <option value="5">5 days</option>
+                        <option value="6">6 days</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                    <div class="input-wrap">
+                      <label class="input-label" for="gen-diet">Dietary Preference</label>
+                      <select class="input-field" id="gen-diet">
+                        <option value="">Use profile setting</option>
+                        <option value="omnivore">Omnivore</option>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="keto">Keto</option>
+                        <option value="paleo">Paleo</option>
+                      </select>
+                    </div>
+                    <div class="input-wrap">
+                      <label class="input-label" for="gen-intensity">Intensity</label>
+                      <select class="input-field" id="gen-intensity">
+                        <option value="">Use profile setting</option>
+                        <option value="light">Light</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="high">High</option>
+                        <option value="extreme">Extreme</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="input-wrap">
+                    <label class="input-label" for="gen-notes">Additional Instructions</label>
+                    <textarea class="input-field" id="gen-notes" rows="3" placeholder="Avoid barbell movements, prefer Indian cuisine, focus on compound lifts..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- What you'll receive -->
+              <div class="panel panel-gold fade-in">
+                <div class="panel-header">
+                  <span class="panel-title">What You'll Receive</span>
+                </div>
+                <div class="panel-body">
+                  <div class="receive-item">
+                    <div class="receive-icon">◉</div>
+                    <div>
+                      <div class="receive-text">Full Week Diet Plan</div>
+                      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:2px;">7-day meal plan with macro breakdowns</div>
+                    </div>
+                  </div>
+                  <div class="receive-item">
+                    <div class="receive-icon">◈</div>
+                    <div>
+                      <div class="receive-text">Full Workout Program</div>
+                      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:2px;">Sets, reps, rest & RPE for every session</div>
+                    </div>
+                  </div>
+                  <div class="receive-item">
+                    <div class="receive-icon">◇</div>
+                    <div>
+                      <div class="receive-text">AI Coach Briefing</div>
+                      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:2px;">Personalised strategy notes from Eva</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: CTA card -->
+            <div style="position:sticky;top:32px;">
+              <div class="panel panel-gold fade-in" style="padding:32px;text-align:center;">
+                <div class="gen-ring">
+                  <div class="gen-ring-outer"></div>
+                  <div class="gen-ring-middle"></div>
+                  <div class="gen-ring-dot"></div>
+                </div>
+                <div style="font-family:var(--font-display);font-size:28px;font-weight:300;font-style:italic;color:var(--platinum);margin-bottom:8px;">
+                  Generate Full Plan with Eva
+                </div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em;margin-bottom:20px;">
+                  Powered by Gemini AI
+                </div>
+                <div class="divider-gold"></div>
+                <!-- Profile snapshot -->
+                <div id="gen-profile-snap" style="display:flex;justify-content:center;gap:24px;font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--silver);margin-bottom:20px;">
+                  <span id="gen-snap-height">— cm</span>
+                  <span id="gen-snap-weight">— kg</span>
+                  <span id="gen-snap-goal">—</span>
+                </div>
+                <button id="btn-generate-now" class="btn btn-gold btn-full">Generate Now →</button>
+                <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:0.05em;">
+                  ~15–30 seconds · replaces current plan
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════ -->
+      <!-- SCREEN: TRACK                     -->
+      <!-- ══════════════════════════════════ -->
+      <div id="screen-track" class="screen">
+        <div class="page-header">
+          <div class="page-header-left">
+            <div class="page-eyebrow">Eva · Daily Log</div>
+            <h1 class="page-title">Track Today</h1>
+          </div>
+          <div class="page-header-actions">
+            <span class="badge badge-muted" id="track-date">—</span>
+          </div>
+        </div>
+
+        <div class="content-pad">
+          <div class="grid-2">
+            <!-- Left: Workout Adherence -->
+            <div class="panel fade-in">
+              <div class="panel-header">
+                <span class="panel-title">Workout Adherence</span>
+                <span class="badge badge-muted" id="track-workout-badge">—</span>
+              </div>
+              <div class="panel-body" id="track-exercise-list">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:40px 0;">
+                  No workout plan to track
+                </div>
+              </div>
+              <div class="panel-footer">
+                <div class="divider-gold" style="margin:0 0 16px;"></div>
+                <button id="btn-submit-workout" class="btn btn-outline btn-full">Submit Workout Log →</button>
+              </div>
+            </div>
+
+            <!-- Right: Caloric Log + Wellbeing -->
+            <div class="stack">
+              <!-- Caloric Log -->
+              <div class="panel fade-in">
+                <div class="panel-header">
+                  <span class="panel-title">Caloric Log</span>
+                </div>
+                <div class="panel-body">
+                  <div class="cal-center">
+                    <span class="cal-value" id="track-cal-val">0</span>
+                    <span class="cal-unit">kcal</span>
+                  </div>
+                  <div class="cal-remaining" style="text-align:center;" id="track-cal-rem">— remaining to target</div>
+                  <div style="margin-top:16px;">
+                    <div class="progress-track progress-track-4">
+                      <div class="progress-fill" id="track-cal-bar" style="width:0%"></div>
+                    </div>
+                    <div class="cal-scale">
+                      <span>0</span>
+                      <span id="track-cal-target">— kcal target</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Energy & Wellbeing -->
+              <div class="panel fade-in">
+                <div class="panel-header">
+                  <span class="panel-title">Energy & Wellbeing</span>
+                </div>
+                <div class="panel-body">
+                  <div style="margin-bottom:20px;">
+                    <div style="font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--silver);margin-bottom:10px;">Energy Level</div>
+                    <div class="rating-group" id="energy-rating">
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="1" data-group="energy">1</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="2" data-group="energy">2</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="3" data-group="energy">3</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="4" data-group="energy">4</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="5" data-group="energy">5</button>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--silver);margin-bottom:10px;">Sleep Quality</div>
+                    <div class="rating-group" id="sleep-rating">
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="1" data-group="sleep">1</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="2" data-group="sleep">2</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="3" data-group="sleep">3</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="4" data-group="sleep">4</button>
+                      <button class="btn btn-ghost btn-sm rating-btn" data-rating="5" data-group="sleep">5</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════ -->
+      <!-- SCREEN: PROFILE                   -->
+      <!-- ══════════════════════════════════ -->
+      <div id="screen-profile" class="screen">
+        <!-- Profile header -->
+        <div class="profile-header">
+          <div class="avatar" id="profile-avatar">
+            <span id="profile-initials">—</span>
+            <div class="avatar-dot"></div>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" id="profile-name">—</div>
+            <div class="profile-since" id="profile-since">Member since —</div>
+            <div class="profile-badges">
+              <span class="badge badge-gold" id="profile-level-badge">Advanced</span>
+              <span class="badge badge-green" id="profile-streak-badge">— Day Streak</span>
+              <span class="badge badge-muted" id="profile-goal-badge">—</span>
+              <span class="badge badge-muted" id="profile-diet-badge">—</span>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button class="btn btn-ghost btn-sm">Edit Profile</button>
+            <button id="btn-signout" class="btn btn-outline btn-sm">Sign Out</button>
+          </div>
+        </div>
+
+        <div class="content-pad" style="padding-top:32px;">
+          <div class="grid-2 section-gap">
+            <!-- Physical Stats -->
+            <div class="panel fade-in">
+              <div class="panel-header">
+                <span class="panel-title">Physical Stats</span>
+              </div>
+              <div class="panel-body">
+                <table class="data-table" id="profile-stats-table">
+                  <tr>
+                    <td>Height</td>
+                    <td id="p-height">—</td>
+                    <td><span class="badge badge-muted">cm</span></td>
+                  </tr>
+                  <tr>
+                    <td>Weight</td>
+                    <td id="p-weight">—</td>
+                    <td><span class="badge badge-muted">kg</span></td>
+                  </tr>
+                  <tr>
+                    <td>Body Fat</td>
+                    <td id="p-bodyfat">—</td>
+                    <td><span class="badge badge-muted">%</span></td>
+                  </tr>
+                  <tr>
+                    <td>TDEE</td>
+                    <td id="p-tdee">—</td>
+                    <td><span class="badge badge-gold">kcal/day</span></td>
+                  </tr>
+                  <tr>
+                    <td>Target Calories</td>
+                    <td id="p-target-cal">—</td>
+                    <td><span class="badge badge-green">Active</span></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Plan History -->
+            <div class="panel fade-in">
+              <div class="panel-header">
+                <span class="panel-title">Plan History</span>
+              </div>
+              <div class="panel-body" id="plan-history-body">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:40px 0;">
+                  No plan history yet
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- App Settings -->
+          <div class="panel panel-gold fade-in">
+            <div class="panel-header">
+              <span class="panel-title">App Settings</span>
+            </div>
+            <div class="panel-body">
+              <div class="settings-grid">
+                <div class="input-wrap">
+                  <label class="input-label" for="set-units">Measurement Units</label>
+                  <select class="input-field" id="set-units">
+                    <option value="metric">Metric (kg/cm)</option>
+                    <option value="imperial">Imperial (lbs/ft)</option>
+                  </select>
+                </div>
+                <div class="input-wrap">
+                  <label class="input-label" for="set-notif">Workout Notification</label>
+                  <select class="input-field" id="set-notif">
+                    <option value="enabled">Enabled</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </div>
+                <div class="input-wrap">
+                  <label class="input-label" for="set-tone">AI Coach Tone</label>
+                  <select class="input-field" id="set-tone">
+                    <option value="authoritative">Authoritative</option>
+                    <option value="encouraging">Encouraging</option>
+                    <option value="clinical">Clinical</option>
+                  </select>
+                </div>
+              </div>
+              <div class="divider-gold"></div>
+              <div style="display:flex;justify-content:flex-end;gap:12px;">
+                <button id="btn-reset-settings" class="btn btn-ghost btn-sm">Reset</button>
+                <button id="btn-save-settings" class="btn btn-gold btn-sm">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script type="module" src="/js/main.js"></script>
 </body>
 </html>
