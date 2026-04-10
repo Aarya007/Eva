@@ -1,18 +1,24 @@
 import logging
+import sys
 from pathlib import Path
+
+# Project root (parent of `app/`) so `import app...` works when running `python main.py` from app/
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 from dotenv import load_dotenv
 
 # Load .env before any app imports
-_root = Path(__file__).resolve().parent.parent
-load_dotenv(_root / "app" / ".env")
-load_dotenv(_root / "app" / "api" / ".env", override=True)
+load_dotenv(_REPO_ROOT / "app" / ".env")
+load_dotenv(_REPO_ROOT / "app" / "api" / ".env", override=True)
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from api.routes import router
-from core.auth import get_current_user
-from services.supabase_store import SupabasePersistError, is_persistence_enabled
+from app.api.routes import router
+from app.core.auth import get_current_user
+from app.services.supabase_store import SupabasePersistError, is_persistence_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -89,4 +95,4 @@ def test_auth(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

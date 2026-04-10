@@ -51,8 +51,9 @@
   --avatar-r:       50%;
 
   /* ── Z-index ── */
-  --z-noise:        9999;
-  --z-scanlines:    9998;
+  /* Keep atmosphere *below* #app-shell so UI is never painted under fixed overlays */
+  --z-noise:        1;
+  --z-scanlines:    2;
   --z-modal:        500;
   --z-tooltip:      100;
   --z-sticky:       10;

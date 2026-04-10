@@ -3,18 +3,6 @@
    Keyframes, transitions, stagger system
    ═══════════════════════════════════════════ */
 
-/* ── Screen entrance ── */
-@keyframes screenIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ── Wordmark entrance ── */
 @keyframes wordmarkIn {
   from {
@@ -94,15 +82,24 @@
   transition: opacity 0.5s var(--ease-entrance),
               transform 0.5s var(--ease-entrance);
 }
-.fade-in.visible {
+.fade-in.visible,
+.fade-in.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* ── Screen active animation ── */
+/* Active screen: always show panels (JS adds .is-visible after async inits; until then
+   everything with .fade-in stayed at opacity:0). */
+.screen.is-active .fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Active screen (no opacity/transform animation — avoids blank main area in WebKit) ── */
 .screen.active,
 .screen.is-active {
-  animation: screenIn 0.6s var(--ease-entrance);
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ── Splash elements ── */

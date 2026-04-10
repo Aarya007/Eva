@@ -4,9 +4,10 @@
    ═══════════════════════════════════════════ */
 
 /* ── App shell ── */
+/* Sidebar is position:fixed; do not rely on grid for the main column (fixed items can
+   collapse the first track in some engines, and margin-left on main doubled the offset). */
 .app-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr;
+  display: block;
   min-height: 100vh;
   position: relative;
 }
@@ -126,7 +127,11 @@
 
 /* ── Main content ── */
 .main {
-  margin-left: var(--sidebar-w);
+  padding-left: var(--sidebar-w);
+  margin-left: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
   overflow-y: auto;
   height: 100vh;
 }

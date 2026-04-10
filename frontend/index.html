@@ -47,6 +47,64 @@
 </div>
 
 <!-- ═══════════════════════════════════════ -->
+<!-- EDIT PROFILE MODAL                    -->
+<!-- ═══════════════════════════════════════ -->
+<div id="profile-edit-modal" class="gen-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="profile-edit-title">
+  <div class="panel panel-gold" style="max-width:440px;width:92%;max-height:90vh;overflow:auto;">
+    <div class="panel-body" style="padding:28px;">
+      <div class="gen-modal-title" id="profile-edit-title" style="margin-bottom:20px;">Edit Profile</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="input-wrap">
+          <label class="input-label" for="edit-display-name">Display name</label>
+          <input type="text" id="edit-display-name" class="input-field" placeholder="Your name" autocomplete="name" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="input-wrap">
+            <label class="input-label" for="edit-height">Height (cm)</label>
+            <input type="number" id="edit-height" class="input-field" min="50" max="280" step="0.1" />
+          </div>
+          <div class="input-wrap">
+            <label class="input-label" for="edit-weight">Weight (kg)</label>
+            <input type="number" id="edit-weight" class="input-field" min="20" max="400" step="0.1" />
+          </div>
+        </div>
+        <div class="input-wrap">
+          <label class="input-label" for="edit-bodyfat">Body fat (%)</label>
+          <input type="number" id="edit-bodyfat" class="input-field" min="0" max="100" step="0.1" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="input-wrap">
+            <label class="input-label" for="edit-goal">Goal</label>
+            <select class="input-field" id="edit-goal">
+              <option value="maintenance">Maintenance</option>
+              <option value="muscle_gain">Muscle gain</option>
+              <option value="fat_loss">Fat loss</option>
+              <option value="recomp">Recomposition</option>
+              <option value="endurance">Endurance</option>
+            </select>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label" for="edit-diet">Diet</label>
+            <select class="input-field" id="edit-diet">
+              <option value="veg">Vegetarian (veg)</option>
+              <option value="omnivore">Omnivore</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="keto">Keto</option>
+              <option value="paleo">Paleo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+        <button type="button" id="btn-profile-edit-cancel" class="btn btn-ghost btn-sm">Cancel</button>
+        <button type="button" id="btn-profile-edit-save" class="btn btn-gold btn-sm">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
 <!-- AUTH SCREEN                            -->
 <!-- ═══════════════════════════════════════ -->
 <div id="auth-screen" style="display:none;">
@@ -670,7 +728,7 @@
             </div>
           </div>
           <div class="profile-actions">
-            <button class="btn btn-ghost btn-sm">Edit Profile</button>
+            <button type="button" id="btn-edit-profile" class="btn btn-ghost btn-sm">Edit Profile</button>
             <button id="btn-signout" class="btn btn-outline btn-sm">Sign Out</button>
           </div>
         </div>

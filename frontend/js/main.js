@@ -103,8 +103,6 @@ async function bootAuthed() {
     _navBound = true;
     window.debugGoDashboard = () => go('dashboard');
   }
-  // Keep a visible default while status resolves, without forcing dashboard first.
-  await go('onboarding');
   await applyHealthBanner();
   let status = null;
   try {
@@ -116,9 +114,10 @@ async function bootAuthed() {
   // Ignore stale runs triggered by overlapping auth events.
   if (runId !== _bootRunId) return;
   const done = isOnboardingDone(status);
+  const target = done ? 'dashboard' : 'onboarding';
   console.log('Onboarding complete:', done);
-  console.log(`Routing -> ${done ? 'dashboard' : 'onboarding'}`);
-  await go(done ? 'dashboard' : 'onboarding');
+  console.log(`Routing -> ${target}`);
+  await go(target);
 }
 
 async function initApp() {

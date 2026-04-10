@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════
 // EVA — NAVIGATION
-// Screen switching + active state management
+// Screen switching (in-page). URL stays http://localhost:3000/ — no #fragment.
+// Path-based routes like /dashboard would collide with Vite API proxies (/plans, /profile, …).
 // ═══════════════════════════════════════════
 
 const SCREEN_IDS = ['dashboard', 'plans', 'generate', 'track', 'onboarding', 'profile'];
@@ -17,7 +18,19 @@ export function triggerFadeIns(selector) {
   });
 }
 
-export async function go(screenId) {
+/** Keep address bar as plain origin + / (strips old #/… bookmarks). */
+function syncUrlToRoot() {
+  try {
+    if (window.location.pathname !== '/' || window.location.hash || window.location.search) {
+      window.history.replaceState(null, '', '/');
+    }
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+export async function go(screenId, opts = {}) {
+  const { syncUrl = true } = opts;
   if (!SCREEN_IDS.includes(screenId)) {
     console.error('Unknown screen:', screenId);
     return;
@@ -35,6 +48,8 @@ export async function go(screenId) {
     item.classList.toggle('is-active', active);
     item.classList.toggle('active', active);
   });
+
+  if (syncUrl) syncUrlToRoot();
 
   const init = inits.get(screenId);
   if (init) {

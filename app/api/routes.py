@@ -4,11 +4,11 @@ from typing import Any, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Request
 
-from core.auth import get_current_user
-from agents.orchestrator import Orchestrator
-from agents.tracker_agent import TrackerAgent
-from agents.workout_planner import WorkoutPlannerAgent
-from services.memory import (
+from app.core.auth import get_current_user
+from app.agents.orchestrator import Orchestrator
+from app.agents.tracker_agent import TrackerAgent
+from app.agents.workout_planner import WorkoutPlannerAgent
+from app.services.memory import (
     get_user_data,
     get_onboarding_status,
     normalize_user_memory,
@@ -18,16 +18,17 @@ from services.memory import (
     store_feedback,
     profile_ready,
 )
-from schemas.diet import UserInput, FeedbackInput
-from schemas.onboarding import OnboardingStepInput, OnboardingInput
-from schemas.track import TrackInput
-from services.calculator import (
+from app.schemas.diet import UserInput, FeedbackInput
+from app.schemas.onboarding import OnboardingStepInput, OnboardingInput
+from app.schemas.track import TrackInput
+from app.schemas.profile import ProfilePatch
+from app.services.calculator import (
     calculate_bmr,
     calculate_tdee,
     calculate_target_calories,
     calculate_macros,
 )
-from services.supabase_store import (
+from app.services.supabase_store import (
     SupabaseQueryError,
     fetch_latest_diet_plan,
     fetch_latest_workout_plan,
@@ -90,6 +91,19 @@ def get_profile(request: Request):
         "onboarding_complete": st["onboarding_complete"],
         "completion_percent": st["completion_percent"],
         "filled": st["filled"],
+    }
+
+
+@router.patch("/profile")
+def patch_profile(request: Request, body: ProfilePatch):
+    user_id = get_current_user(request)
+    patch = body.model_dump(exclude_none=True)
+    if not patch:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    store_user_data(user_id, patch, merge_lists=False)
+    return {
+        "ok": True,
+        "profile": normalize_user_memory(get_user_data(user_id)),
     }
 
 

@@ -62,6 +62,13 @@ export async function getProfile() {
   return apiFetch('/profile');
 }
 
+export async function patchProfile(body) {
+  return apiFetch('/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+
 // ── Plans ────────────────────────────────────
 export async function getPlans() {
   return apiFetch('/plans');
