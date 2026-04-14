@@ -641,6 +641,28 @@ textarea.input-field {
 .btn--full { width: 100%; }
 .btn--loading { opacity: 0.65; pointer-events: none; }
 .btn--success { background: var(--green); border-color: var(--green); color: #fff; }
+.btn--success:hover:not(:disabled) { filter: brightness(1.08); }
+
+/* Wizard / programmatic buttons (createButton primary|secondary|success) */
+.btn--primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--void);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--gold-bright);
+  border-color: var(--gold-bright);
+}
+.btn--secondary {
+  background: transparent;
+  border-color: var(--border-glow);
+  color: var(--platinum);
+}
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(200, 170, 100, 0.06);
+}
 
 .badge--gold { background: rgba(200,170,100,0.12); border-color: var(--border-glow); color: var(--gold); }
 .badge--green { background: rgba(58,138,90,0.12); border-color: rgba(58,138,90,0.3); color: #5AAC7C; }

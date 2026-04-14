@@ -1,6 +1,6 @@
 import { getOnboardingStatus, getPlansMerged, getProfile } from '../api/client.js';
 import { EmptyState, InsightCard, LoadingState, StatCard } from '../components/ui.js';
-import { signOut } from '../auth/session.js';
+import { signOut, getSession } from '../auth/session.js';
 import { toast } from '../ui/toast.js';
 import { getMockGreeting } from '../dashboard/mockDashboard.js';
 
@@ -13,6 +13,39 @@ function $(id) {
 function safeText(id, value) {
   const el = $(id);
   if (el) el.textContent = value;
+}
+
+/** Greeting prefix from the user's local clock (browser timezone). */
+function timeGreetingPrefix(d = new Date()) {
+  const h = d.getHours();
+  if (h >= 5 && h < 12) return 'Good morning,';
+  if (h >= 12 && h < 17) return 'Good afternoon,';
+  if (h >= 17 && h < 22) return 'Good evening,';
+  return 'Good night,';
+}
+
+/** Prefer profile display_name; else email local-part from session; else a generic label. */
+async function resolveDisplayName(profile) {
+  const raw = (profile?.display_name || '').trim();
+  if (raw) return raw;
+  try {
+    const data = await getSession();
+    const u = data?.user;
+    const meta = u?.user_metadata || {};
+    const metaName = (meta.full_name || meta.name || meta.display_name || '').trim();
+    if (metaName) return metaName;
+    const em = u?.email?.trim();
+    if (em) {
+      const local = em.split('@')[0] || '';
+      const pretty = local.replace(/[._]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (pretty) {
+        return pretty.replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+    }
+  } catch {
+    /* offline */
+  }
+  return 'Athlete';
 }
 
 function fillSkeleton(id) {
@@ -264,8 +297,9 @@ export async function initDashboard() {
     const history = readEvaTrackHistory();
     const consistencyLine = buildConsistencyInsightLine(history);
 
-    safeText('dash-name', profile.display_name || 'Athlete');
-    safeText('dash-greeting', 'Good morning,');
+    const displayName = await resolveDisplayName(profile);
+    safeText('dash-greeting', timeGreetingPrefix());
+    safeText('dash-name', displayName);
     safeText('dash-goal', profile.goal || 'Goal not set');
     safeText('dash-streak', String(profile.streak_days || 0));
     safeText('cal-val', String(profile.last_calories || 0));
@@ -344,8 +378,8 @@ export async function initDashboard() {
   } catch (e) {
     console.error('Dashboard crash:', e);
     const mock = getMockGreeting();
+    safeText('dash-greeting', timeGreetingPrefix());
     safeText('dash-name', mock.name);
-    safeText('dash-greeting', 'Good morning,');
     safeText('dash-goal', 'Maintenance');
     safeText('cal-val', '2200');
     safeText('prot-val', '140');

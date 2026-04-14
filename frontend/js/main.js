@@ -33,6 +33,33 @@ let _screensRegistered = false;
 let _navBound = false;
 let _bootRunId = 0;
 
+/** @type {'login' | 'signup'} */
+let _authMode = 'login';
+
+function setAuthMode(mode) {
+  _authMode = mode;
+  const title = $('auth-title');
+  const sub = $('auth-sub');
+  const btnSign = $('btn-signin');
+  const btnToggle = $('btn-signup-toggle');
+  const err = $('auth-error');
+  if (mode === 'signup') {
+    if (title) title.textContent = 'Create account';
+    if (sub) sub.textContent = 'Sign up with email or Google to use Eva.';
+    if (btnSign) btnSign.textContent = 'Sign up →';
+    if (btnToggle) btnToggle.textContent = 'Back to sign in';
+  } else {
+    if (title) title.textContent = 'Welcome Back';
+    if (sub) sub.textContent = 'Sign in to continue';
+    if (btnSign) btnSign.textContent = 'Sign In →';
+    if (btnToggle) btnToggle.textContent = 'Create Account';
+  }
+  if (err) {
+    err.style.display = 'none';
+    err.textContent = '';
+  }
+}
+
 function isOnboardingDone(status) {
   if (!status || typeof status !== 'object') return false;
   if (status.onboarding_complete === true) return true;
@@ -58,15 +85,21 @@ function wireAuthUI() {
   $('btn-signin')?.addEventListener('click', async () => {
     const email = $('auth-email')?.value?.trim();
     const password = $('auth-password')?.value || '';
-    const { error } = await signInWithPassword(email, password);
-    if (error) showErr(error.message || String(error));
+    if (_authMode === 'signup') {
+      const { error } = await signUpWithPassword(email, password);
+      if (error) showErr(error.message || String(error));
+      else {
+        const errEl = $('auth-error');
+        if (errEl) errEl.style.display = 'none';
+        toast('Account created. Check your email if confirmation is enabled.', 'success');
+      }
+    } else {
+      const { error } = await signInWithPassword(email, password);
+      if (error) showErr(error.message || String(error));
+    }
   });
-  $('btn-signup-toggle')?.addEventListener('click', async () => {
-    const email = $('auth-email')?.value?.trim();
-    const password = $('auth-password')?.value || '';
-    const { error } = await signUpWithPassword(email, password);
-    if (error) showErr(error.message || String(error));
-    else showErr('Account created. Check your email if confirmation is enabled.');
+  $('btn-signup-toggle')?.addEventListener('click', () => {
+    setAuthMode(_authMode === 'login' ? 'signup' : 'login');
   });
   $('btn-google')?.addEventListener('click', async () => {
     const { error } = await signInWithGoogle();
@@ -124,18 +157,21 @@ async function initApp() {
   wireAuthUI();
   if (!isSupabaseConfigured()) {
     showAuth(true);
+    setAuthMode('login');
     toast('Supabase env missing in frontend/.env.local');
     return;
   }
   const sessionData = await getSession();
   if (!sessionData?.session) {
     showAuth(true);
+    setAuthMode('login');
   } else {
     await bootAuthed();
   }
   onAuthChange(async (event, session) => {
     if (event === 'SIGNED_OUT') {
       showAuth(true);
+      setAuthMode('login');
       return;
     }
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {

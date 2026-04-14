@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="/style/components.css" />
   <link rel="stylesheet" href="/style/animations.css" />
   <link rel="stylesheet" href="/style/screens.css" />
+  <link rel="stylesheet" href="/style/onboarding.css" />
 </head>
 <body>
 
@@ -141,8 +142,8 @@
     </div>
     <div class="auth-card panel panel-gold">
       <div class="panel-body" style="padding:32px;">
-        <div class="auth-title">Welcome Back</div>
-        <div class="auth-sub">Sign in to continue</div>
+        <div class="auth-title" id="auth-title">Welcome Back</div>
+        <div class="auth-sub" id="auth-sub">Sign in to continue</div>
         <div style="display:flex;flex-direction:column;gap:16px;">
           <div class="input-wrap">
             <label class="input-label" for="auth-email">Email</label>
@@ -275,7 +276,7 @@
         <!-- Hero Banner -->
         <div class="hero-banner">
           <div class="hero-watermark">EVA</div>
-          <div class="hero-greeting" id="dash-greeting">Good morning,</div>
+          <div class="hero-greeting" id="dash-greeting">Hello,</div>
           <div class="hero-name" id="dash-name">—</div>
           <div class="hero-meta">
             <div class="hero-streak">

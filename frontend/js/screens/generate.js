@@ -23,6 +23,16 @@ async function handleGenerate(btn, modal, status) {
     status.textContent = STATUS_STEPS[i % STATUS_STEPS.length];
     i += 1;
   }, 1800);
+
+  /** Close loader as soon as generate finishes — do not wait for `go()` (plans init can be slow). */
+  function endLoading() {
+    window.clearInterval(timer);
+    modal.style.display = 'none';
+    btn.classList.remove('btn--loading');
+    status.textContent = STATUS_STEPS[0];
+  }
+
+  let navigateTo = null;
   try {
     const profileResp = await getProfile();
     const profile = profileResp?.profile || profileResp || {};
@@ -33,21 +43,21 @@ async function handleGenerate(btn, modal, status) {
     await getPlans().catch(() => null);
 
     toast('Plan generated successfully', 'success');
-    await go('plans');
+    navigateTo = 'plans';
   } catch (e) {
     const msg = String(e?.message || e);
     if (msg.includes('400') && msg.toLowerCase().includes('complete onboarding first')) {
       toast('Complete onboarding first', 'error');
-      await go('onboarding');
+      navigateTo = 'onboarding';
     } else {
       console.error('Generate failed:', e);
       toast(`Generate failed: ${msg}`, 'error');
     }
   } finally {
-    window.clearInterval(timer);
-    modal.style.display = 'none';
-    btn.classList.remove('btn--loading');
+    endLoading();
   }
+
+  if (navigateTo) await go(navigateTo);
 }
 
 export function initGenerate() {
