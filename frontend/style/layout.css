@@ -676,3 +676,71 @@
   background: var(--gold);
   animation: pulse 2s infinite;
 }
+
+@media (max-width: 960px) {
+  .grid-2,
+  .grid-2-1,
+  .grid-1-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page-header {
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+  }
+
+  .page-header-actions {
+    padding-top: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .content-pad {
+    padding-left: var(--sp-5);
+    padding-right: var(--sp-5);
+  }
+
+  .page-header {
+    padding-left: var(--sp-5);
+    padding-right: var(--sp-5);
+    padding-top: var(--sp-6);
+  }
+
+  .hero-banner {
+    padding-left: var(--sp-5);
+    padding-right: var(--sp-5);
+  }
+
+  .profile-header {
+    flex-wrap: wrap;
+    padding-left: var(--sp-5);
+    padding-right: var(--sp-5);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .content-pad {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+  }
+
+  .page-title {
+    font-size: 32px;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-name {
+    font-size: 42px;
+  }
+}

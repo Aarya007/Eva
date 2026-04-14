@@ -104,6 +104,32 @@
   </div>
 </div>
 
+<div id="feedback-modal" class="gen-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
+  <div class="panel panel-gold" style="max-width:400px;width:92%;">
+    <div class="panel-body" style="padding:28px;">
+      <div class="gen-modal-title" id="feedback-modal-title">Feedback</div>
+      <div class="input-wrap" style="margin-top:16px;">
+        <label class="input-label" for="feedback-rating">Rating</label>
+        <select id="feedback-rating" class="input-field">
+          <option value="5">5 — Excellent</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1 — Poor</option>
+        </select>
+      </div>
+      <div class="input-wrap">
+        <label class="input-label" for="feedback-text">Comments (optional)</label>
+        <textarea id="feedback-text" class="input-field" rows="3" placeholder="What would help?"></textarea>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;">
+        <button type="button" id="btn-feedback-cancel" class="btn btn-ghost btn-sm">Cancel</button>
+        <button type="button" id="btn-feedback-submit" class="btn btn-gold btn-sm">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════ -->
 <!-- AUTH SCREEN                            -->
 <!-- ═══════════════════════════════════════ -->
@@ -367,7 +393,11 @@
                   <span class="panel-title">Meal Plan · Today</span>
                   <span class="badge badge-muted" id="dash-meal-total-cal">— kcal</span>
                 </div>
-                <div class="panel-body" id="dash-meal-list">
+                <div class="panel-body dash-next-meal-host" id="dash-next-meal-host">
+                  <div class="panel-title dash-next-meal-eyebrow">Current / next meal</div>
+                  <div id="dash-next-meal" class="dash-next-meal"></div>
+                </div>
+                <div class="panel-body panel-body--scroll" id="dash-meal-list">
                   <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0;">
                     Generate a plan to see your meals
                   </div>
@@ -403,9 +433,9 @@
             <h1 class="page-title">Active Plan</h1>
           </div>
           <div class="page-header-actions">
-            <div id="plans-warning-badge" style="display:none;"></div>
-            <button class="btn btn-ghost btn-sm" id="btn-export">Export ↗</button>
-            <button class="btn btn-outline btn-sm" id="btn-regen-plan">Regenerate →</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-feedback">Feedback</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-export">Export ↗</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-regen-plan">Regenerate →</button>
           </div>
         </div>
 
@@ -428,7 +458,7 @@
                 <span class="panel-title" id="plan-workout-header">Workout</span>
                 <span class="badge badge-gold" id="plan-day-badge">—</span>
               </div>
-              <div class="panel-body" id="plan-exercise-list">
+              <div class="panel-body panel-body--scroll" id="plan-exercise-list">
                 <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:40px 0;">
                   No plan generated yet
                 </div>
@@ -443,7 +473,7 @@
                   <span class="panel-title">Diet Plan · Today</span>
                   <span class="badge badge-gold" id="plan-diet-kcal">— kcal</span>
                 </div>
-                <div class="panel-body" id="plan-meal-list">
+                <div class="panel-body panel-body--scroll" id="plan-meal-list">
                   <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0;">
                     No diet plan yet
                   </div>
@@ -651,8 +681,8 @@
 
             <!-- Right: Caloric Log + Wellbeing -->
             <div class="stack">
-              <!-- Caloric Log -->
-              <div class="panel fade-in">
+              <!-- Caloric Log (hidden until wired to real intake) -->
+              <div class="panel fade-in" style="display:none;">
                 <div class="panel-header">
                   <span class="panel-title">Caloric Log</span>
                 </div>

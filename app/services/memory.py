@@ -1,3 +1,6 @@
+from datetime import datetime, timezone
+from typing import Any, Optional
+
 from app.core.config import EVA_DEBUG_AUTH
 from app.services.supabase_store import (
     fetch_nested_state,
@@ -7,6 +10,38 @@ from app.services.supabase_store import (
 )
 
 user_memory = {}
+
+# Latest generated plans per user (process memory only; GET /plans fallback when DB has no row).
+_latest_plans_by_user: dict[str, dict[str, Any]] = {}
+
+
+def _plan_cache_now_iso() -> str:
+    return (
+        datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    )
+
+
+def set_latest_plans_from_generation(
+    user_id: str, diet_out: dict[str, Any], workout_out: Any
+) -> None:
+    """Store rows compatible with GET /plans (plan + created_at), for RAM-only / DB miss."""
+    now = _plan_cache_now_iso()
+    diet_row = None
+    if isinstance(diet_out, dict) and "error" not in diet_out:
+        p = diet_out.get("plan")
+        if isinstance(p, dict):
+            diet_row = {"plan": p, "created_at": now}
+    workout_row = None
+    if isinstance(workout_out, dict):
+        workout_row = {"plan": workout_out, "created_at": now}
+    _latest_plans_by_user[user_id] = {"diet": diet_row, "workout": workout_row}
+
+
+def get_latest_plans_from_cache(
+    user_id: str,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    row = _latest_plans_by_user.get(user_id) or {}
+    return row.get("diet"), row.get("workout")
 
 
 def _debug(msg: str) -> None:
@@ -64,6 +99,9 @@ FIELD_TO_SECTION = {
     "food_usage_counts": "behavior",
     "last_plan_summary": "behavior",
     "last_calories": "behavior",
+    "target_protein_g": "behavior",
+    "target_carbs_g": "behavior",
+    "target_fats_g": "behavior",
     "last_tracker_adherence": "behavior",
     "last_tracker_at": "behavior",
     "feedback_history": "feedback",
@@ -106,6 +144,9 @@ DEFAULT_MEMORY = {
     "last_plan_summary": "",
     "food_usage_counts": {},
     "last_calories": None,
+    "target_protein_g": None,
+    "target_carbs_g": None,
+    "target_fats_g": None,
     "medical_none_ack": False,
     "sleep_hours": None,
     "stress_level": "",
@@ -442,7 +483,13 @@ def record_skipped_meal(user_id: str, meal_name: str):
     _persist_user_state(user_id)
 
 
-def persist_after_generation(user_id: str, user_payload: dict, plan: dict, last_calories=None):
+def persist_after_generation(
+    user_id: str,
+    user_payload: dict,
+    plan: dict,
+    last_calories=None,
+    macros: Optional[dict[str, Any]] = None,
+):
     _ensure_nested(user_id)
     nested = user_memory[user_id]
     goals = nested["goals"]
@@ -452,6 +499,18 @@ def persist_after_generation(user_id: str, user_payload: dict, plan: dict, last_
     goals["goal"] = user_payload.get("goal") or goals.get("goal", "")
     if last_calories is not None:
         beh["last_calories"] = last_calories
+    if isinstance(macros, dict):
+        for macro_key, beh_key in (
+            ("protein", "target_protein_g"),
+            ("carbs", "target_carbs_g"),
+            ("fats", "target_fats_g"),
+        ):
+            v = macros.get(macro_key)
+            if v is not None:
+                try:
+                    beh[beh_key] = int(round(float(v)))
+                except (TypeError, ValueError):
+                    pass
     beh["last_plan_summary"] = build_last_plan_summary(plan)
     if user_payload.get("disliked_foods"):
         diet["disliked_foods"] = dedupe_merge_lists(
@@ -568,6 +627,9 @@ def profile_snapshot_for_client(row: dict) -> dict:
         "timezone",
         "skipped_meals",
         "last_calories",
+        "target_protein_g",
+        "target_carbs_g",
+        "target_fats_g",
     )
     out: dict = {}
     for k in keys:
@@ -582,6 +644,8 @@ def profile_snapshot_for_client(row: dict) -> dict:
         ):
             out[k] = list(v) if isinstance(v, list) else []
         elif k == "last_calories":
+            out[k] = int(v) if v is not None else None
+        elif k in ("target_protein_g", "target_carbs_g", "target_fats_g"):
             out[k] = int(v) if v is not None else None
         elif k in ("age", "weight", "height", "sleep_hours", "waist_cm", "body_fat_pct", "target_weight_kg"):
             out[k] = v

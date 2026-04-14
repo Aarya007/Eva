@@ -1,6 +1,8 @@
 import { getPlans, postTrack } from '../api/client.js';
 import { toast } from '../ui/toast.js';
 
+const EVA_TRACK_STORAGE_KEY = 'eva_track';
+
 function $(id) {
   return document.getElementById(id);
 }
@@ -9,6 +11,30 @@ const trackState = {
   energy: null,
   sleep: null,
 };
+
+function buildTrackPayload() {
+  const notes = [];
+  if (trackState.energy != null) notes.push(`energy:${trackState.energy}`);
+  if (trackState.sleep != null) notes.push(`sleep:${trackState.sleep}`);
+  if (notes.length === 0) notes.push('tracked_session');
+  return {
+    actual_meals: [],
+    notes,
+  };
+}
+
+/** Always persists; does not throw. */
+function appendLocalTrackEntry(entry) {
+  try {
+    const raw = localStorage.getItem(EVA_TRACK_STORAGE_KEY);
+    const history = raw ? JSON.parse(raw) : [];
+    const list = Array.isArray(history) ? history : [];
+    list.push(entry);
+    localStorage.setItem(EVA_TRACK_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    /* ignore quota / JSON issues */
+  }
+}
 
 function wireRatings() {
   document.querySelectorAll('.rating-btn').forEach((btn) => {
@@ -51,23 +77,31 @@ export async function initTrack() {
   submit.dataset.bound = 'true';
   submit.addEventListener('click', async () => {
     submit.classList.add('btn--loading');
+    const payload = buildTrackPayload();
+    let remote = null;
+    let remoteError = null;
     try {
-      const payload = {
-        actual_meals: [],
-        notes: ['Tracked activity'],
-      };
-      console.log('Tracking payload:', payload);
-      await postTrack(payload);
-      submit.classList.remove('btn--outline');
-      submit.classList.add('btn--success');
-      submit.textContent = '✓ Logged Successfully';
-      console.log('Track success');
-      toast('Track saved', 'success');
+      remote = await postTrack(payload);
     } catch (e) {
-      console.error('Track failed:', e);
-      toast(`Track submit failed: ${e.message || e}`);
-    } finally {
-      submit.classList.remove('btn--loading');
+      remoteError = e?.message || String(e);
     }
+
+    appendLocalTrackEntry({
+      savedAt: Date.now(),
+      payload,
+      synced: !remoteError,
+      adherence: remote?.adherence,
+      error: remoteError || undefined,
+    });
+
+    submit.classList.remove('btn--outline');
+    submit.classList.add('btn--success');
+    submit.textContent = '✓ Logged Successfully';
+    if (!remoteError) {
+      toast('Track saved', 'success');
+    } else {
+      toast(`Saved on this device. Sync failed: ${remoteError}`, 'error');
+    }
+    submit.classList.remove('btn--loading');
   });
 }

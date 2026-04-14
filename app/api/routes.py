@@ -11,9 +11,11 @@ from app.agents.workout_planner import WorkoutPlannerAgent
 from app.services.memory import (
     get_user_data,
     get_onboarding_status,
+    get_latest_plans_from_cache,
     normalize_user_memory,
     build_memory_context,
     persist_after_generation,
+    set_latest_plans_from_generation,
     store_user_data,
     store_feedback,
     profile_ready,
@@ -185,6 +187,7 @@ def _run_diet_generation(
             user.model_dump(exclude_none=True),
             result["plan"],
             last_calories=round(calories),
+            macros=macros,
         )
 
     out = {
@@ -269,6 +272,7 @@ def generate_full_plan(request: Request, user: UserInput):
         workout_out = _workout_agent._fallback_output()
 
     warnings = _persist_plans_after_full(user_id, diet_out, workout_out)
+    set_latest_plans_from_generation(user_id, diet_out, workout_out)
     out: dict[str, Any] = {"diet": diet_out, "workout": workout_out}
     if warnings:
         out["warnings"] = warnings
@@ -283,6 +287,11 @@ def get_plans(request: Request):
         workout = fetch_latest_workout_plan(user_id)
     except SupabaseQueryError:
         raise HTTPException(status_code=503, detail="Failed to fetch plans")
+    cached_diet, cached_workout = get_latest_plans_from_cache(user_id)
+    if diet is None:
+        diet = cached_diet
+    if workout is None:
+        workout = cached_workout
     status = "empty" if diet is None and workout is None else "ok"
     return {"diet": diet, "workout": workout, "status": status}
 
